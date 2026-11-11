@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6ee">
+  <title>住区防蚊 · 珠江未来小屋</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; background-color: #fcfcfc; color: #1a1a1a; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3 { margin-top: 0; font-weight: 600; line-height: 1.2; }
+    img { max-width: 100%; height: auto; display: block; }
+    button, input { font: inherit; }
+
+    :root {
+      color-scheme: light;
+      --paper: #f8f6ee;
+      --ink: #20372e;
+      --muted: #566b5e;
+      --green: #2b654e;
+      --line: #d6ded0;
+      --warning: #89442f;
+    }
+    body { background: #e7ece2; color: var(--ink); font-family: "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif; }
+    ::selection { background: #c6dec9; color: var(--ink); }
+    p, figure, dl, dd { margin: 0; }
+    button, select { color: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+    .dashboard {
+      width: min(100%, 500px);
+      min-height: 100svh;
+      margin-inline: auto;
+      padding: 14px clamp(14px, 4.5vw, 22px) max(14px, env(safe-area-inset-bottom));
+      background: var(--paper);
+    }
+    .heading, .map-heading, .map-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .heading { margin-bottom: 12px; }
+    h1 { margin: 0 0 3px; font-size: clamp(23px, 6.8vw, 31px); letter-spacing: -.035em; font-weight: 750; }
+    .location { color: var(--muted); font-size: 12px; }
+    .scenario { align-self: center; max-width: 48%; }
+    .scenario select {
+      min-height: 44px;
+      max-width: 100%;
+      padding: 6px 5px 6px 8px;
+      border: 1px solid #cdd9ca;
+      border-radius: 8px;
+      background: #eef2e7;
+      font: 12px "Microsoft YaHei UI", system-ui, sans-serif;
+    }
+
+    .report {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) clamp(82px, 26vw, 122px);
+      align-items: center;
+      gap: 7px;
+      border-radius: 14px;
+      background: #e6eedf;
+      overflow: hidden;
+      padding: 9px 8px 9px 12px;
+    }
+    .report[data-tone="high"] { background: #f3e6d4; }
+    .report[data-tone="unknown"] { background: #ecebe1; }
+    .report-name { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    .report h2 { font-size: clamp(18px, 5.35vw, 24px); letter-spacing: -.035em; margin: 0 0 5px; font-weight: 750; }
+    .report-tip { font-size: 12px; color: #3a5547; line-height: 1.5; }
+    .report[data-tone="high"] h2, .report[data-tone="high"] .risk-grade { color: var(--warning); }
+    .portrait {
+      position: relative;
+      align-self: stretch;
+      min-height: 92px;
+      overflow: hidden;
+      border-radius: 9px;
+      background: #d8e5d2;
+    }
+    .portrait img { width: 100%; height: 100%; position: absolute; object-fit: cover; object-position: 50% 44%; }
+    .risk-grade { display: inline-block; margin-left: 5px; color: var(--green); font-weight: 700; }
+    .report[data-tone="unknown"] .risk-grade { color: var(--muted); }
+
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; margin-block: 12px; }
+    .metric { min-width: 0; }
+    .metric + .metric { border-left: 1px solid var(--line); padding-left: 12px; }
+    .metric dt { color: var(--muted); font-size: 11px; }
+    .metric dd { font-size: 12px; color: var(--muted); line-height: 1.2; }
+    .metric strong { color: var(--ink); font: 650 25px/1.1 "Bahnschrift", "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; margin-right: 4px; }
+    .metric strong[data-tone="high"] { color: var(--warning); }
+
+    .map { background: #faf9f3; border: 1px solid #cdd8c9; border-radius: 13px; overflow: hidden; }
+    .map-heading { padding: 0 10px; }
+    .map-heading h2 { margin: 0; font-size: 15px; font-weight: 700; }
+    .map-heading button {
+      min-height: 44px;
+      padding: 0 2px 0 8px;
+      background: transparent;
+      border: 0;
+      color: var(--green);
+      font-size: 12px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .plot { position: relative; margin: 0 7px; aspect-ratio: 970 / 895; background: #e9ecdf; border-radius: 7px; overflow: hidden; }
+    .plot[data-mode="grid"] { aspect-ratio: 12 / 8; background: #edf0e5; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .marker {
+      position: absolute;
+      top: var(--y);
+      left: var(--x);
+      width: 11px;
+      height: 11px;
+      border: 2px solid #fffdf6;
+      border-radius: 50%;
+      background: #285e4c;
+      box-shadow: 0 0 0 2px #30644b6b;
+      transform: translate(-50%, -50%);
+    }
+    .marker[data-missing="true"] { background: #f5f4e9; border: 2px dashed #61756b; box-shadow: none; }
+    .marker-label {
+      position: absolute;
+      bottom: 13px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 3px 6px;
+      border: 1px solid #a8bda6;
+      border-radius: 5px;
+      background: #fffef5;
+      color: var(--ink);
+      font-size: 10px;
+      line-height: 1.35;
+      white-space: nowrap;
+    }
+    .marker-label b { color: var(--green); }
+    .marker[data-missing="true"] .marker-label, .marker[data-missing="true"] b { color: var(--muted); }
+    .plot[data-mode="site"] .marker:last-child[data-missing="true"] .marker-label { top: 13px; bottom: auto; }
+    @media (max-width: 350px) {
+      .plot[data-mode="site"] .marker:last-child .marker-label { top: 13px; bottom: auto; }
+    }
+    .map-caption { padding: 7px 9px 8px; color: var(--muted); font-size: 11px; }
+    .map-meta { flex-wrap: wrap; gap: 4px 8px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+    .legend span { white-space: nowrap; }
+    .legend i { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 2px; background: #b6a58f; }
+    .legend .plant-key { background: #79a579; border-radius: 50%; }
+    .legend .reading-key { background: #2b654e; border-radius: 50%; }
+    .legend .missing-key { background: transparent; border: 1px dashed #61756b; border-radius: 50%; }
+    .caption-note { margin-top: 4px; }
+    .risk-area { color: var(--warning); font-weight: 650; }
+    .data-time { margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+
+    @keyframes greet { from { opacity: .6; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes map-in { from { opacity: .5; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: no-preference) {
+      .report-update { animation: greet 350ms cubic-bezier(.16, 1, .3, 1); }
+      .plot { animation: map-in 450ms ease-out; }
+    }
+    @media (min-width: 560px) {
+      body { padding-block: 16px; }
+      .dashboard { min-height: auto; border-radius: 16px; border: 1px solid #d2dbce; }
+    }
+  </style>
+</head>
+<body>
+  <main class="dashboard">
+    <header class="heading">
+      <div><h1>住区防蚊</h1><p class="location">珠江未来小屋</p></div>
+      <label class="scenario">
+        <span class="sr-only">切换演示场景</span>
+        <select id="scenario">
+          <option value="complete">低风险演示</option>
+          <option value="high">风险偏高演示</option>
+          <option value="incomplete">数据不足演示</option>
+        </select>
+      </label>
+    </header>
+
+    <section class="report" id="report" aria-labelledby="report-title" aria-live="polite" aria-atomic="true">
+      <div class="report-copy">
+        <p class="report-name">虚拟播报员 <span id="risk-grade" class="risk-grade"></span></p>
+        <h2 id="report-title"></h2>
+        <p class="report-tip" id="report-tip"></p>
+      </div>
+      <div class="portrait"><img src="./住区播报员.webp" alt="" width="360" height="360"></div>
+    </section>
+
+    <dl class="metrics" aria-label="监测摘要">
+      <div class="metric"><dt>每设备平均捕获</dt><dd><strong id="average">—</strong><span id="average-unit">只/台</span></dd></div>
+      <div class="metric"><dt>高风险区域</dt><dd><strong id="risk-count">—</strong><span id="risk-unit">待评估</span></dd></div>
+    </dl>
+
+    <figure class="map" aria-labelledby="map-title">
+      <div class="map-heading">
+        <h2 id="map-title">住区场地图</h2>
+        <button type="button" id="map-switch" aria-controls="plot">看 1 米网格</button>
+      </div>
+      <div class="plot" id="plot" data-mode="site">
+        <canvas id="map-drawing" aria-hidden="true"></canvas>
+      </div>
+      <figcaption class="map-caption">
+        <div class="map-meta">
+          <div id="site-legend" class="legend" aria-label="场地图图例"><span><i></i>建筑</span><span><i class="plant-key"></i>树木</span><span><i class="reading-key"></i>示例点位</span></div>
+          <div id="grid-legend" class="legend" aria-label="网格图例" hidden><span><i class="reading-key"></i>实测点</span><span><i class="missing-key"></i>无数据点</span></div>
+          <span id="sample-summary"></span>
+        </div>
+        <p id="site-note" class="caption-note">按景观施工图截图重绘，点位为示意。</p>
+        <p id="grid-note" class="caption-note" hidden>1 米 × 1 米样例，两点相距 5 米。</p>
+        <p id="risk-area" class="caption-note risk-area" hidden>东侧绿地 · 演示高风险区</p>
+      </figcaption>
+    </figure>
+
+    <p class="data-time">演示数据 · 统计窗口 24 小时 · 截至 <time datetime="2026-11-11T14:32:00+08:00">11/11 14:32</time></p>
+  </main>
+
+  <script>
+    const scenarios = {
+      complete: {
+        counts: { A: 4, B: 14 }, tone: 'low', riskCount: 0,
+        grade: '演示 · 风险较低', title: '户外活动可照常',
+        tip: '想出门走走，可以照常安排，记得做好日常防蚊。',
+      },
+      high: {
+        counts: { A: 4, B: 14 }, tone: 'high', riskCount: 1,
+        grade: '演示 · 风险偏高', title: '外出记得加强防蚊',
+        tip: '经过绿地或树荫时，按产品说明使用驱蚊剂。',
+      },
+      incomplete: {
+        counts: { A: 4 }, tone: 'unknown', riskCount: null,
+        grade: '演示 · 数据不足', title: '当前风险待评估',
+        tip: 'B 点暂未上报，暂无本时段的户外活动建议。',
+      },
+    };
+    const grid = { columns: 12, rows: 8 };
+    const site = { x: 20, y: 15, width: 970, height: 895 };
+    const devices = [
+      { id: 'A', grid: [3.5, 4.5], site: [451, 660] },
+      { id: 'B', grid: [8.5, 4.5], site: [602, 661] },
+    ];
+    const byId = id => document.getElementById(id);
+    const plot = byId('plot');
+    const canvas = byId('map-drawing');
+    const selector = byId('scenario');
+    let mapMode = 'site';
+
+    // 建筑和绿化轮廓依据所附施工图截图，用图像坐标简化勾绘。
+    const grounds = new Path2D('M132 28 L943 100 L943 846 L880 846 L880 833 L744 833 L710 878 L363 900 L343 850 L302 823 L64 823 Z');
+    const buildings = [
+      'M382 181 H570 V212 H670 V232 H743 V251 H815 V386 H743 V614 H682 V354 H449 V317 H383 Z',
+      'M304 662 H402 V724 H423 V782 H412 V851 H354 V829 H305 Z',
+      'M645 727 H860 V744 H883 V831 H793 V847 H657 V820 H614 V759 Z',
+    ].map(outline => new Path2D(outline));
+    const plantingBeds = [
+      'M151 360 C190 348 217 377 256 372 C291 366 311 329 334 350 C370 369 348 424 359 462 C382 516 327 577 279 578 C230 581 216 552 196 514 C169 486 144 454 151 360 Z',
+      'M759 400 L907 390 L914 665 C861 667 810 646 755 607 Z',
+      'M408 624 C452 599 504 623 516 671 C525 724 493 758 506 790 C475 817 430 804 432 770 C445 724 414 713 408 624 Z',
+      'M590 648 C635 597 693 614 723 662 C741 692 719 716 689 721 C638 727 599 704 590 648 Z',
+      'M159 107 C250 92 330 102 365 144 L355 268 C268 262 228 217 145 231 Z',
+    ].map(outline => new Path2D(outline));
+    const paths = [
+      'M140 282 C219 277 272 295 335 316 L361 330 L367 570 C408 620 491 612 536 634 C563 648 568 709 570 760 L569 873',
+      'M347 462 C323 408 311 391 274 388 C238 385 227 405 228 430 C225 465 266 463 301 448',
+      'M366 566 C325 569 320 603 287 618 C234 640 219 695 229 757 L235 825',
+      'M539 635 C584 628 608 611 640 606 C686 598 736 631 752 670 L892 697',
+      'M777 401 C819 373 864 363 899 331 L897 181',
+      'M378 617 L526 619 L526 550 L682 550',
+    ].map(outline => new Path2D(outline));
+    const trees = [
+      [165, 151, 26], [206, 129, 22], [257, 129, 24], [301, 143, 29], [335, 188, 23],
+      [180, 207, 18], [141, 254, 19], [194, 258, 22], [249, 232, 23], [309, 250, 25],
+      [170, 396, 19], [198, 413, 23], [197, 460, 27], [229, 494, 29], [267, 521, 35],
+      [303, 497, 32], [320, 455, 21], [308, 410, 23], [330, 370, 22], [247, 550, 17],
+      [156, 562, 24], [146, 622, 24], [136, 689, 24], [150, 755, 22], [172, 796, 18],
+      [449, 660, 19], [475, 694, 22], [464, 745, 22], [478, 785, 18], [510, 820, 16],
+      [615, 654, 18], [643, 680, 25], [674, 696, 20], [693, 659, 24],
+      [797, 414, 22], [858, 401, 24], [897, 429, 21], [871, 480, 30], [819, 467, 27],
+      [790, 512, 20], [852, 536, 25], [896, 562, 26], [826, 587, 25], [875, 628, 23],
+      [849, 166, 20], [886, 149, 20], [910, 225, 17], [902, 296, 20],
+    ];
+    const riskOutline = new Path2D('M774 403 L906 389 L916 652 Q838 664 765 609 Z');
+
+    const markers = devices.map(device => {
+      const element = document.createElement('div');
+      element.className = 'marker';
+      const label = document.createElement('span');
+      label.className = 'marker-label';
+      const name = document.createElement('b');
+      name.textContent = device.id + ' ';
+      const reading = document.createElement('span');
+      label.append(name, reading);
+      element.append(label);
+      plot.append(element);
+      return { device, element, reading };
+    });
+
+    function paint(context, outline, fill, stroke, weight = 1) {
+      if (fill) {
+        context.fillStyle = fill;
+        context.fill(outline);
+      }
+      if (stroke) {
+        context.strokeStyle = stroke;
+        context.lineWidth = weight;
+        context.stroke(outline);
+      }
+    }
+
+    function drawSite(context, width, height) {
+      context.scale(width / site.width, height / site.height);
+      context.translate(-site.x, -site.y);
+      context.fillStyle = '#e9ecdf';
+      context.fillRect(site.x, site.y, site.width, site.height);
+      paint(context, grounds, '#dce7cf', '#a5b49a', 3);
+      context.save();
+      context.clip(grounds);
+
+      for (const bed of plantingBeds) paint(context, bed, '#c2d6ac', '#a3bb91', 2);
+      context.lineJoin = 'round';
+      context.lineCap = 'round';
+      for (const walk of paths) {
+        paint(context, walk, null, '#c8bc9d', 18);
+        paint(context, walk, null, '#f5e9cd', 13);
+      }
+      paint(context, new Path2D('M452 372 H675 V544 H452 Z'), '#f0e7d3', '#cfbfa2', 2);
+      for (const outline of buildings) {
+        context.save();
+        context.translate(7, 8);
+        paint(context, outline, '#7d7a6455');
+        context.restore();
+        paint(context, outline, '#b7a38c', '#857768', 3);
+      }
+      paint(context, new Path2D('M396 209 H559 V237 H664 V255 H728 M473 292 H799 M693 374 V603 M316 676 H389 V748 M661 742 H845 V760'), null, '#e0cfb3', 4);
+
+      for (const [index, [x, y, radius]] of trees.entries()) {
+        context.beginPath();
+        context.ellipse(x + 5, y + 6, radius, radius * .91, 0, 0, Math.PI * 2);
+        context.fillStyle = '#435e3f2d';
+        context.fill();
+        context.beginPath();
+        context.arc(x, y, radius, 0, Math.PI * 2);
+        context.fillStyle = ['#729a6e', '#8aab78', '#9bb784'][index % 3];
+        context.fill();
+        context.beginPath();
+        context.arc(x - radius * .22, y - radius * .2, radius * .62, 0, Math.PI * 2);
+        context.fillStyle = '#b7ca9d80';
+        context.fill();
+      }
+      if (scenarios[selector.value].tone === 'high') paint(context, riskOutline, '#d66b4344', '#a84d33', 5);
+
+      context.font = '500 30px "Microsoft YaHei UI", system-ui, sans-serif';
+      context.textAlign = 'center';
+      context.fillStyle = '#344d3e';
+      context.fillText('中庭', 555, 462);
+      context.fillText('西侧花园', 247, 345);
+      context.fillStyle = scenarios[selector.value].tone === 'high' ? '#752f1e' : '#344d3e';
+      context.fillText('东侧绿地', 838, 596);
+      context.restore();
+    }
+
+    function drawGrid(context, width, height) {
+      const cell = width / grid.columns;
+      context.fillStyle = '#eef2e7';
+      context.fillRect(0, 0, width, height);
+      context.strokeStyle = '#bed0b9';
+      context.beginPath();
+      for (let x = 1; x < grid.columns; x++) {
+        context.moveTo(x * cell, 0);
+        context.lineTo(x * cell, height);
+      }
+      for (let y = 1; y < grid.rows; y++) {
+        context.moveTo(0, y * cell);
+        context.lineTo(width, y * cell);
+      }
+      context.stroke();
+
+      const [start, end] = devices.map(device => device.grid);
+      context.beginPath();
+      context.setLineDash([4, 4]);
+      context.strokeStyle = '#5f7966';
+      context.moveTo(start[0] * cell, start[1] * cell);
+      context.lineTo(end[0] * cell, end[1] * cell);
+      context.stroke();
+      context.setLineDash([]);
+      context.font = '12px "Segoe UI", sans-serif';
+      context.textAlign = 'center';
+      context.fillStyle = '#365748';
+      context.fillText('5 m', (start[0] + end[0]) * cell / 2, start[1] * cell + 17);
+    }
+
+    function drawMap() {
+      const { width, height } = plot.getBoundingClientRect();
+      const pixelRatio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(width * pixelRatio);
+      canvas.height = Math.round(height * pixelRatio);
+      const context = canvas.getContext('2d');
+      context.scale(pixelRatio, pixelRatio);
+      if (mapMode === 'site') drawSite(context, width, height);
+      else drawGrid(context, width, height);
+    }
+
+    function placeMarkers() {
+      for (const { device, element } of markers) {
+        const [x, y] = device[mapMode];
+        const isSite = mapMode === 'site';
+        const horizontal = isSite ? (x - site.x) / site.width : x / grid.columns;
+        const vertical = isSite ? (y - site.y) / site.height : y / grid.rows;
+        element.style.setProperty('--x', horizontal * 100 + '%');
+        element.style.setProperty('--y', vertical * 100 + '%');
+      }
+    }
+
+    function renderScenario(animate = false) {
+      const scenario = scenarios[selector.value];
+      const readings = devices.map(device => scenario.counts[device.id]).filter(Number.isFinite);
+      const total = readings.reduce((sum, count) => sum + count, 0);
+      const report = byId('report');
+      report.dataset.tone = scenario.tone;
+      byId('risk-grade').textContent = scenario.grade;
+      byId('report-title').textContent = scenario.title;
+      byId('report-tip').textContent = scenario.tip;
+      byId('average').textContent = readings.length ? (total / readings.length).toLocaleString('zh-CN', { maximumFractionDigits: 1 }) : '—';
+      byId('average-unit').textContent = readings.length ? '只/台' : '无数据';
+      byId('risk-count').textContent = scenario.riskCount ?? '—';
+      byId('risk-count').dataset.tone = scenario.tone;
+      byId('risk-unit').textContent = scenario.riskCount === null ? '待评估' : '处';
+      byId('sample-summary').textContent = readings.length + ' / ' + devices.length + ' 台有数据';
+      byId('risk-area').hidden = scenario.tone !== 'high' || mapMode !== 'site';
+
+      for (const { device, element, reading } of markers) {
+        const count = scenario.counts[device.id];
+        const missing = !Number.isFinite(count);
+        element.dataset.missing = String(missing);
+        reading.textContent = missing ? '无数据' : count + ' 只';
+      }
+      if (animate) {
+        report.classList.remove('report-update');
+        void report.offsetWidth;
+        report.classList.add('report-update');
+      }
+      drawMap();
+    }
+
+    byId('map-switch').addEventListener('click', () => {
+      const isSite = mapMode === 'grid';
+      mapMode = isSite ? 'site' : 'grid';
+      plot.dataset.mode = mapMode;
+      byId('map-title').textContent = isSite ? '住区场地图' : '1 米网格样例';
+      byId('map-switch').textContent = isSite ? '看 1 米网格' : '返回场地图';
+      byId('site-legend').hidden = !isSite;
+      byId('site-note').hidden = !isSite;
+      byId('grid-legend').hidden = isSite;
+      byId('grid-note').hidden = isSite;
+      byId('risk-area').hidden = !isSite || scenarios[selector.value].tone !== 'high';
+      placeMarkers();
+      drawMap();
+    });
+    selector.addEventListener('change', () => renderScenario(true));
+    new ResizeObserver(drawMap).observe(plot);
+    placeMarkers();
+    renderScenario(true);
+  </script>
+</body>
+</html>

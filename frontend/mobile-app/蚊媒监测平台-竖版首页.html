@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>住区蚊媒监测与智能预警平台</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}body{margin:0;font:15px/1.55 system-ui,"Microsoft YaHei",sans-serif;color:#eaf3fa;background:#09131f;-webkit-font-smoothing:antialiased;color-scheme:dark}h1,h2,h3{margin:0;font-weight:650;line-height:1.25}img{max-width:100%;height:auto;display:block}button,input{font:inherit}p{margin:0}a{color:inherit;text-decoration:none}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:2px solid #6ff1d3;outline-offset:3px}
+:root{--muted:#a4b8c9;--line:#283c50;--panel:#101f2f;--mint:#6ce6cd;--amber:#ffc183}small,.muted{color:var(--muted)}.top{border-bottom:1px solid var(--line);background:#0d1927}.top-inner,main,footer{max-width:990px;margin:auto;padding-inline:24px}.top-inner{min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:14px}.brand{display:flex;align-items:center;gap:11px;font-weight:650}.brand svg{flex:none}.badge{color:var(--mint);background:#143434;border:1px solid #2b5353;padding:4px 9px;border-radius:5px;white-space:nowrap;font-size:12px}nav{position:sticky;top:0;z-index:5;background:#09131f;border-bottom:1px solid var(--line)}nav div{max-width:990px;margin:auto;padding-inline:24px;display:flex;gap:26px}nav a{padding:12px 0;color:var(--muted);font-size:13px}nav a:hover,nav a[aria-current]{color:var(--mint)}nav a[aria-current]{box-shadow:inset 0 -2px var(--mint)}main{padding-block:32px 24px}section{scroll-margin-top:65px;margin-bottom:22px}h1{font-size:32px;letter-spacing:-.025em}h2{font-size:20px}h3{font-size:16px}.head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}.sub{margin-top:5px;color:var(--muted);font-size:13px}.kpis,.split{display:grid;gap:12px}.kpis{grid-template-columns:repeat(4,1fr)}.split{grid-template-columns:1.45fr 1fr;gap:16px}.tile,.panel{background:var(--panel);border:1px solid var(--line);border-radius:13px}.tile{padding:14px 16px}.tile strong{display:block;font-size:29px;font-variant-numeric:tabular-nums;line-height:1.3;margin:4px 0}.tile strong span{font-size:12px;color:var(--muted);margin-left:5px}.panel{padding:18px;min-width:0}.controls{display:flex;gap:6px;flex-wrap:wrap}.controls button{border:1px solid var(--line);background:#0d1927;color:#c5d5df;border-radius:6px;padding:6px 10px;font-size:12px;min-height:36px}.controls button:hover{border-color:var(--mint)}button[aria-pressed=true]{background:#173b3c;color:var(--mint);border-color:#3c716c}.map{position:relative;aspect-ratio:800/420;background:#0b1926;border:1px solid var(--line);border-radius:9px;overflow:hidden}.map svg{width:100%;height:100%;display:block}.pin{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);width:35px;height:35px;border:0;background:transparent;padding:0;display:grid;place-items:center}.pin::after{content:"";width:12px;height:12px;background:#7ff9de;border:2px solid #112e32;border-radius:50%;box-shadow:0 0 0 2px #66e6cd88}.pin[aria-pressed=true]{background:transparent;border:0}.pin[aria-pressed=true]::after,.pin:hover::after{width:17px;height:17px;box-shadow:0 0 0 4px #66e6cd55}.pin[hidden]{display:none}.legend{display:flex;align-items:center;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:12px;margin:10px 0}.dot{width:8px;height:8px;border-radius:50%;background:var(--mint);display:inline-block;margin-right:5px}.ramp{width:70px;height:6px;border-radius:9px;background:linear-gradient(90deg,#31bca9,#ffac65)}.detail{padding:10px 12px;background:#0c1825;border-radius:6px;color:#c6d8e3;font-size:13px;min-height:42px}.chart{width:100%;display:block}.bar-row{margin:13px 0}.bar-row div,.row{display:flex;justify-content:space-between;gap:10px}.bar-row div{font-size:13px;margin-bottom:4px}.track{height:6px;background:#21374a;border-radius:4px;overflow:hidden}.track i{display:block;height:100%;background:var(--mint)}.row{border-top:1px solid var(--line);padding:11px 0;align-items:flex-start}.row:last-child{padding-bottom:0}.row p{color:var(--muted);font-size:13px;margin-top:4px}.status{font-size:12px;color:var(--amber);white-space:nowrap}.done{color:var(--mint)}footer{color:var(--muted);font-size:12px;padding-bottom:28px}
+@media(max-width:620px){.top-inner,main,footer,nav div{padding-inline:14px}.top-inner{min-height:64px}.brand{font-size:13px;line-height:1.35}.brand svg{width:29px}nav div{justify-content:space-between;gap:8px}main{padding-top:23px}h1{font-size:26px}.kpis{grid-template-columns:repeat(2,1fr);gap:8px}.split{grid-template-columns:1fr}.panel{padding:12px}.map{aspect-ratio:800/490}.pin{height:30px;width:30px}}
+</style></head><body>
+<header class="top"><div class="top-inner"><div class="brand"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" aria-hidden="true"><rect x="1" y="1" width="32" height="32" rx="8" stroke="#417c7a" fill="#153433"/><path d="M7 20h6l3-9 4 13 3-7h4" stroke="#7cf0d5" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>住区蚊媒监测与智能预警平台</div><span class="badge">演示模式</span></div></header>
+<nav aria-label="首页导航"><div><a href="#overview" aria-current="location">首页总览</a><a href="#monitoring">蚊媒监测</a><a href="#notices">环境提示</a><a href="#tasks">防控任务</a></div></nav>
+<main><section id="overview"><div class="head"><div><h1>住区监测总览</h1><p class="sub">澄湾花园 · 虚构示范住区</p></div><small>演示快照 · 11月09日 09:00</small></div>
+<div class="kpis"><div class="tile"><small>监测点位</small><strong>06<span>处</span></strong><small>覆盖 4 类公共区域</small></div><div class="tile"><small>在线设备</small><strong>05<span>/ 06 台</span></strong><small>设备在线率 83%</small></div><div class="tile"><small>重点关注区域</small><strong style="color:var(--amber)">02<span>处</span></strong><small>东侧绿化带、西侧排水区</small></div><div class="tile"><small>待处理任务</small><strong>02<span>项</span></strong><small>另有 1 项处理中</small></div></div></section>
+<section id="monitoring" class="panel"><div class="head"><div><h2>住区蚊媒分布</h2><p class="sub">GIS 示意图 · 选择点位查看监测摘要</p></div><div class="controls" aria-label="地图图层"><button data-layer="points" aria-pressed="true">监测点位</button><button data-layer="heat" aria-pressed="true">密度热区</button></div></div>
+<div class="map"><svg viewBox="0 0 800 420" preserveAspectRatio="none" role="img" aria-label="澄湾花园虚构住区平面示意图">
+<defs><pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" stroke="#263c4e" fill="none" opacity=".65"/></pattern><radialGradient id="hot"><stop stop-color="#ffae67" stop-opacity=".83"/><stop offset=".43" stop-color="#d8935a" stop-opacity=".48"/><stop offset="1" stop-color="#d8935a" stop-opacity="0"/></radialGradient><radialGradient id="cool"><stop stop-color="#3cd8b1" stop-opacity=".52"/><stop offset="1" stop-color="#3cd8b1" stop-opacity="0"/></radialGradient></defs>
+<rect width="800" height="420" fill="url(#grid)"/><path d="M95 62H700V354H95Z" fill="#102536" stroke="#4a657a" stroke-dasharray="5 5"/><path d="M110 155H685M110 250H685M365 75V340M525 75V340" stroke="#233c4e" stroke-width="16"/><path d="M110 155H685M110 250H685M365 75V340M525 75V340" stroke="#52687a" stroke-dasharray="5 7" opacity=".6"/>
+<rect x="391" y="90" width="104" height="137" rx="15" fill="#153c39" stroke="#34655e"/><rect x="393" y="274" width="105" height="62" rx="12" fill="#153c39" stroke="#34655e"/><path d="M715 65Q742 130 724 228T738 365M65 68V345" stroke="#2d625e" stroke-width="17" fill="none" opacity=".65"/>
+<g fill="#263f52" stroke="#537286" text-anchor="middle" style="font:15px system-ui"><rect x="140" y="97" width="78" height="42" rx="4"/><text fill="#c0d3df" stroke="none" x="179" y="123">1 栋</text><rect x="246" y="97" width="78" height="42" rx="4"/><text fill="#c0d3df" stroke="none" x="285" y="123">2 栋</text><rect x="140" y="182" width="78" height="42" rx="4"/><text fill="#c0d3df" stroke="none" x="179" y="208">3 栋</text><rect x="246" y="182" width="78" height="42" rx="4"/><text fill="#c0d3df" stroke="none" x="285" y="208">4 栋</text><rect x="140" y="267" width="78" height="42" rx="4"/><text fill="#c0d3df" stroke="none" x="179" y="293">5 栋</text><rect x="246" y="267" width="78" height="42" rx="4"/><text fill="#c0d3df" stroke="none" x="285" y="293">6 栋</text><rect x="570" y="100" width="103" height="45" rx="4"/><text fill="#c0d3df" stroke="none" x="621.5" y="127.5">7 栋</text><rect x="570" y="192" width="103" height="45" rx="4"/><text fill="#c0d3df" stroke="none" x="621.5" y="219.5">8 栋</text><rect x="570" y="285" width="103" height="45" rx="4"/><text fill="#c0d3df" stroke="none" x="621.5" y="312.5">9 栋</text></g>
+<g id="heat"><ellipse cx="714" cy="155" rx="85" ry="83" fill="url(#hot)"/><ellipse cx="77" cy="253" rx="75" ry="71" fill="url(#hot)"/><ellipse cx="445" cy="178" rx="75" ry="57" fill="url(#cool)"/><ellipse cx="458" cy="303" rx="69" ry="44" fill="url(#cool)"/></g>
+<g fill="#cae0eb" font-size="17" text-anchor="middle"><text x="445" y="126">儿童活动区</text><text x="445" y="327">休闲步道</text><text x="697" y="101">东侧绿化带</text><text x="76" y="318">西侧排水区</text><text x="365" y="383">南门</text><text x="754" y="41">北</text></g><path d="m754 49-6 15 6-3 6 3Z" fill="#cae0eb"/></svg>
+<div id="points" role="group" aria-label="监测点位"></div></div>
+<div class="legend"><span><i class="dot"></i>监测点位</span><span>相对密度 低</span><i class="ramp" aria-hidden="true"></i><span>高</span></div><p class="detail" id="pointDetail" aria-live="polite"></p></section>
+<section class="split" aria-label="监测分析"><article class="panel"><div class="head"><div><h2>蚊媒监测趋势</h2><p class="sub">有效点位日均捕获量 · 只/台·日</p></div><div class="controls"><button data-range="7" aria-pressed="true">近 7 日</button><button data-range="14" aria-pressed="false">近 14 日</button></div></div><svg class="chart" id="trend" viewBox="0 0 460 184" role="img"></svg><p class="sub" id="trendSummary" aria-live="polite"></p></article>
+<article class="panel"><h2>区域对比</h2><p class="sub">演示快照 · 只/台·日</p><div id="bars"></div></article></section>
+<section class="split" aria-label="提示与任务"><article class="panel" id="notices"><div class="head"><h2>环境提示</h2><small>演示通知</small></div><div class="row"><div><h3>东侧绿化带与西侧排水区</h3><p>防蚊提醒示例。经过重点关注区域时，建议减少停留。</p></div><span class="status">重点关注</span></div><div class="row"><div><h3>西侧排水区巡查安排</h3><p>物业拟检查排水沟并清理积水。</p></div><span class="status done">物业动态</span></div></article>
+<article class="panel" id="tasks"><div class="head"><h2>防控任务</h2><small>已完成 3 / 6</small></div><div class="row"><div>西侧排水沟巡查</div><span class="status">待处理</span></div><div class="row"><div>步道点位设备复检</div><span class="status">待处理</span></div><div class="row"><div>东侧绿化带积水清理</div><span class="status done">处理中</span></div></article></section></main>
+<footer>界面原型 · 地图、监测数据、任务与通知均为模拟内容。</footer>
+<script>
+const points=[
+  [714,155,'东侧绿化带',12],[77,253,'西侧排水区',9],[445,178,'儿童活动区',4],
+  [449,293,'休闲步道北段',3],[495,343,'休闲步道南段',null],[525,250,'中心步道',2]
+];
+const pointGroup=document.querySelector('#points');
+const pointDetail=document.querySelector('#pointDetail');
+const pins=points.map(([x,y,name,value],index)=>{
+  const button=document.createElement('button');
+  button.className='pin';
+  button.style.setProperty('--x',x/8+'%');
+  button.style.setProperty('--y',y/4.2+'%');
+  button.setAttribute('aria-label',name+'监测点');
+  button.setAttribute('aria-pressed','false');
+  button.addEventListener('click',()=>{
+    for(const pin of pointGroup.children) pin.setAttribute('aria-pressed',String(pin===button));
+    const reading=value===null?'设备离线 · 暂无读数':value+' 只/台·日 · 设备在线';
+    pointDetail.textContent='M0'+(index+1)+' · '+name+' · '+reading+'（模拟）';
+  });
+  pointGroup.append(button);
+  return button;
+});
+pins[0].click();
+document.querySelectorAll('[data-layer]').forEach(button=>button.addEventListener('click',()=>{
+  const show=button.getAttribute('aria-pressed')!=='true';
+  button.setAttribute('aria-pressed',String(show));
+  if(button.dataset.layer==='points'){
+    for(const pin of pins) pin.hidden=!show;
+    if(show) pins[0].click();
+    else pointDetail.textContent='监测点位已隐藏。开启图层后可查看点位摘要。';
+  }else document.querySelector('#heat').style.display=show?'':'none';
+}));
+const readings=[4,5,4,6,5,7,6,7,8,7,9,8,7,6];
+function renderTrend(days){
+  const values=readings.slice(-days);
+  const coords=values.map((value,i)=>[38+i*399/(days-1),148-value*10]);
+  const line=coords.map(p=>p.join(',')).join(' ');
+  const ticks=[0,4,8,12].map(v=>'<path d="M38 '+(148-v*10)+'H437" stroke="#2b4155"/><text x="27" y="'+(152-v*10)+'" text-anchor="end">'+v+'</text>').join('');
+  const dates=[0,Math.floor((days-1)/2),days-1].map(i=>{
+    const date=new Date(Date.UTC(2026,10,10-days+i));
+    return '<text x="'+coords[i][0]+'" y="172" text-anchor="middle">'+(date.getUTCMonth()+1)+'/'+date.getUTCDate()+'</text>';
+  }).join('');
+  const chart=document.querySelector('#trend');
+  chart.innerHTML='<g fill="#a4b8c9" font-size="12">'+ticks+dates+'</g><polygon fill="#215450" opacity=".53" points="38,148 '+line+' 437,148"/><polyline fill="none" stroke="#6ce6cd" stroke-width="2.5" points="'+line+'"/>'+coords.map(([x,y])=>'<circle cx="'+x+'" cy="'+y+'" r="3" fill="#6ce6cd"/>').join('');
+  chart.setAttribute('aria-label','近 '+days+' 日蚊媒日均捕获量，依次为 '+values.join('、')+' 只/台·日');
+  document.querySelector('#trendSummary').textContent='最新 6 只/台·日 · 近 '+days+' 日峰值 '+Math.max(...values)+' 只/台·日';
+}
+document.querySelectorAll('[data-range]').forEach(button=>button.addEventListener('click',()=>{
+  document.querySelectorAll('[data-range]').forEach(option=>option.setAttribute('aria-pressed',String(option===button)));
+  renderTrend(Number(button.dataset.range));
+}));
+renderTrend(7);
+document.querySelector('#bars').innerHTML=[['东侧绿化带',12],['西侧排水区',9],['儿童活动区',4],['休闲步道',2.5]].map(([name,value])=>'<div class="bar-row"><div><span>'+name+'</span><strong>'+value+'</strong></div><div class="track" aria-hidden="true"><i style="width:'+value/12*100+'%"></i></div></div>').join('');
+document.querySelectorAll('nav a').forEach(link=>link.addEventListener('click',()=>{
+  document.querySelectorAll('nav a').forEach(item=>item.removeAttribute('aria-current'));
+  link.setAttribute('aria-current','location');
+}));
+</script></body></html>

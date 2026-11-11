@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>住区 · 居民防蚊提醒</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}body{margin:0;font:16px/1.55 system-ui,"Microsoft YaHei",sans-serif;background:#0c211f;color:#f2f8ed;-webkit-font-smoothing:antialiased}h1,h2{margin:0;font-weight:650;line-height:1.2}p{margin:0}img{max-width:100%;height:auto;display:block}button,input{font:inherit}header,main{max-width:740px;margin:auto;padding-inline:20px}header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:19px}.brand{display:flex;align-items:center;gap:10px;font-weight:650}.brand svg{flex:none}.demo{font-size:12px;color:#ffe0a0;border:1px solid #756444;border-radius:5px;padding:4px 8px;white-space:nowrap}main{padding-bottom:24px}.notice{background:#e5f4e6;color:#17372e;border-radius:16px;padding:22px 24px;margin-bottom:16px}.notice-top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px 14px;font-size:14px;color:#3b5d51;margin-bottom:12px}.notice h1{font-size:30px;letter-spacing:-.025em}.notice p{margin-top:8px}.caution{display:flex;gap:8px;align-items:baseline;border-top:1px solid #bcd2bf;padding-top:11px;font-size:15px}.caution strong{color:#513b0d;background:#ffe7a7;border-radius:5px;padding:1px 6px;white-space:nowrap}.map-panel{padding:15px;background:#102b28;border:1px solid #36534a;border-radius:16px}.map-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 2px 13px}.map-head h2{font-size:18px}.map-head span,footer{color:#b9cfc1;font-size:13px}.map{width:100%;height:auto;max-height:70vh;display:block;border-radius:9px;border:1px solid #36594e}.legend{display:flex;gap:8px 20px;flex-wrap:wrap;padding:11px 2px 0;font-size:14px;color:#d0e4d7}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{display:block;width:9px;height:9px;border-radius:50%;background:#a4edcc}.legend span+span i{background:#ffda89}footer{margin-top:11px}
+@media(max-width:480px){header,main{padding-inline:13px}.notice{padding:18px 15px}.notice h1{font-size:25px}.map-panel{padding:9px}.map-head{padding-block:4px 10px}}
+.counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-block:12px}input{width:72px;color:#f2f8ed;background:#18372e;border:1px solid #6b9684;padding:4px}summary{cursor:pointer}button{padding:4px 9px;background:#a4edcc;color:#122e26;border:0;border-radius:4px}form p{margin-block:8px}#results small{color:#355448}</style></head>
+<body><header><div class="brand"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="#1f4439" stroke="#54786b"/><path d="M7 18h4l3-8 4 11 2-5h3" stroke="#a4edcc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>住区 · 防蚊提醒</div><span class="demo">演示示例</span></header>
+<main>
+<section class="notice"><div class="notice-top"><span>蚊媒空间估算</span><span>演示 · 同一晨间采样时段</span></div><h1>空地和健身区，哪里捕获量估算更低？</h1><div id="results" aria-live="polite"></div><p><small>数值表示模型估算的标准化捕获量。色块为估算网格，留白表示缺少点位支持。</small></p></section>
+<section class="map-panel" aria-labelledby="map-title"><div class="map-head"><h2 id="map-title">住区估算地图</h2><span>按布点图重绘</span></div>
+<svg class="map" viewBox="30 0 710 738" role="img" aria-label="按附件重绘的住区布点图，含四处建筑轮廓及 M01 至 M09 点位。色块表示估算捕获量，虚线围合区域为演示分区。">
+<defs>
+<pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse"><path d="M22 0H0V22" fill="none" stroke="#39534a" opacity=".5"/></pattern>
+<pattern id="roof" width="8" height="8" patternUnits="userSpaceOnUse"><path d="m0 8 8-8" stroke="#8b9d94" opacity=".16"/></pattern>
+</defs>
+<path fill="#0c221e" d="M30 0H740V738H30Z"/><path fill="url(#grid)" d="M30 0H740V738H30Z"/>
+<path d="M224 22H610L726 43 712 365 691 618 647 713H41V234H224Z" fill="#18372e" stroke="#5c8a76" stroke-width="2"/>
+<path d="M242 44H605L709 60 699 360 677 608 635 694H57V253H242Z" fill="none" stroke="#43725e" stroke-width="2" stroke-dasharray="5 7"/>
+<path d="M283 25V716M523 25V716M40 257H722M40 490H709" stroke="#5c9c91" opacity=".32" stroke-dasharray="5 7"/>
+<g id="surface" opacity=".45"></g><g fill="none" stroke-linejoin="round" stroke-linecap="round">
+<path d="M82 380H279L329 289H585L635 329V602L605 658 538 679M329 289 319 222 331 178M320 394V481H454M167 670H407L451 620 493 604" stroke="#557268" stroke-width="21"/>
+<path d="M82 380H279L329 289H585L635 329V602L605 658 538 679M329 289 319 222 331 178M320 394V481H454M167 670H407L451 620 493 604" stroke="#304e43" stroke-width="16"/>
+<path d="M311 153C318 115 343 110 351 101 378 58 426 57 454 83S461 145 473 170 503 210 465 230 413 223 393 216 356 239 325 220 291 174 311 153Z" fill="#2b5043" stroke="#82a595" stroke-width="3"/>
+<path d="M317 155C329 128 352 117 364 98 381 73 422 71 441 88S450 151 466 178 474 216 453 219 423 214 405 204 364 227 339 215 306 185 317 155Z" stroke="#98ad9f" stroke-dasharray="3 6"/>
+<circle cx="356" cy="169" r="39" stroke="#8ea899" stroke-width="2"/><circle cx="356" cy="169" r="29" stroke="#607f71"/><ellipse cx="417" cy="109" rx="30" ry="15" transform="rotate(24 417 109)" stroke="#8ea899" stroke-width="2"/>
+<path d="M110 433Q172 390 215 411T285 457 258 523 196 504 156 473 110 478Z" fill="#21493a" stroke="#507e67"/>
+<circle cx="228" cy="458" r="33" fill="#35574a" stroke="#7b9a8b" stroke-width="2"/>
+<path d="M540 620Q595 618 612 572L644 558Q659 639 596 672L524 685Z" fill="#244e3e" stroke="#648b75" stroke-width="2"/>
+</g>
+<g fill="#2c604a" stroke="#63917a" stroke-width="1.2"><circle cx="474" cy="88" r="19"/><path d="M462.6 88h22.8m-11.4 -11.4v22.8" stroke-opacity=".65"/><circle cx="468" cy="200" r="20"/><path d="M456 200h24m-12 -12v24" stroke-opacity=".65"/><circle cx="490" cy="228" r="19"/><path d="M478.6 228h22.8m-11.4 -11.4v22.8" stroke-opacity=".65"/><circle cx="514" cy="239" r="13"/><path d="M506.2 239h15.6m-7.8 -7.8v15.6" stroke-opacity=".65"/><circle cx="582" cy="233" r="20"/><path d="M570 233h24m-12 -12v24" stroke-opacity=".65"/><circle cx="241" cy="278" r="18"/><path d="M230.2 278h21.599999999999998m-10.799999999999999 -10.799999999999999v21.599999999999998" stroke-opacity=".65"/><circle cx="225" cy="308" r="15"/><path d="M216 308h18m-9 -9v18" stroke-opacity=".65"/><circle cx="180" cy="347" r="18"/><path d="M169.2 347h21.599999999999998m-10.799999999999999 -10.799999999999999v21.599999999999998" stroke-opacity=".65"/><circle cx="144" cy="364" r="14"/><path d="M135.6 364h16.8m-8.4 -8.4v16.8" stroke-opacity=".65"/><circle cx="248" cy="502" r="20"/><path d="M236 502h24m-12 -12v24" stroke-opacity=".65"/><circle cx="231" cy="523" r="13"/><path d="M223.2 523h15.6m-7.8 -7.8v15.6" stroke-opacity=".65"/><circle cx="292" cy="241" r="11"/><path d="M285.4 241h13.2m-6.6 -6.6v13.2" stroke-opacity=".65"/><circle cx="608" cy="581" r="18"/><path d="M597.2 581h21.599999999999998m-10.799999999999999 -10.799999999999999v21.599999999999998" stroke-opacity=".65"/><circle cx="621" cy="606" r="17"/><path d="M610.8 606h20.4m-10.2 -10.2v20.4" stroke-opacity=".65"/><circle cx="594" cy="637" r="17"/><path d="M583.8 637h20.4m-10.2 -10.2v20.4" stroke-opacity=".65"/><circle cx="557" cy="652" r="16"/><path d="M547.4 652h19.2m-9.6 -9.6v19.2" stroke-opacity=".65"/><circle cx="681" cy="421" r="22"/><path d="M667.8 421h26.4m-13.2 -13.2v26.4" stroke-opacity=".65"/></g>
+
+<g><rect x="63" y="177" width="141" height="94" rx="2" fill="#52645d"/><rect x="63" y="177" width="141" height="94" rx="2" fill="url(#roof)" stroke="#c2d0c7" stroke-width="2.5"/><text x="133.5" y="230" text-anchor="middle" fill="#eff5ef" font-size="22">建筑</text></g><g><rect x="54" y="493" width="111" height="198" rx="2" fill="#52645d"/><rect x="54" y="493" width="111" height="198" rx="2" fill="url(#roof)" stroke="#c2d0c7" stroke-width="2.5"/><text x="109.5" y="598" text-anchor="middle" fill="#eff5ef" font-size="22">建筑</text></g><g><rect x="262" y="515" width="217" height="51" rx="2" fill="#52645d"/><rect x="262" y="515" width="217" height="51" rx="2" fill="url(#roof)" stroke="#c2d0c7" stroke-width="2.5"/><text x="370.5" y="546.5" text-anchor="middle" fill="#eff5ef" font-size="22">建筑</text></g><g><rect x="479" y="314" width="127" height="247" rx="2" fill="#52645d"/><rect x="479" y="314" width="127" height="247" rx="2" fill="url(#roof)" stroke="#c2d0c7" stroke-width="2.5"/><text x="542.5" y="443.5" text-anchor="middle" fill="#eff5ef" font-size="22">建筑</text></g>
+<g fill="#8ebbb0"><circle cx="254" cy="162" r="6" stroke="#102622" stroke-width="2"/><text x="267" y="153" text-anchor="start" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M01</text></g><g id="areas"></g><g fill="#a4edcc"><circle cx="450" cy="237" r="9" stroke="#102622" stroke-width="2"/><text x="463" y="228" text-anchor="start" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M02</text></g><g fill="#8ebbb0"><circle cx="657" cy="155" r="6" stroke="#102622" stroke-width="2"/><text x="645" y="146" text-anchor="end" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M03</text></g><g fill="#8ebbb0"><circle cx="207" cy="362" r="6" stroke="#102622" stroke-width="2"/><text x="220" y="353" text-anchor="start" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M04</text></g><g fill="#8ebbb0"><circle cx="447" cy="350" r="6" stroke="#102622" stroke-width="2"/><text x="460" y="341" text-anchor="start" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M05</text></g><g fill="#ffda89"><circle cx="651" cy="465" r="9" stroke="#102622" stroke-width="2"/><text x="639" y="456" text-anchor="end" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M06</text></g><g fill="#8ebbb0"><circle cx="199" cy="621" r="6" stroke="#102622" stroke-width="2"/><text x="212" y="612" text-anchor="start" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M07</text></g><g fill="#8ebbb0"><circle cx="417" cy="616" r="6" stroke="#102622" stroke-width="2"/><text x="430" y="607" text-anchor="start" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M08</text></g><g fill="#8ebbb0"><circle cx="659" cy="643" r="6" stroke="#102622" stroke-width="2"/><text x="647" y="634" text-anchor="end" font-size="20" font-weight="650" paint-order="stroke" stroke="#102622" stroke-width="4">M09</text></g>
+</svg><div class="legend"><span><i></i>估算较低</span><span><i></i>估算较高</span></div></section>
+<section class="map-panel" style="margin-top:16px"><details><summary>填写捕蚊数据与调整扩散值</summary><form id="model"><p>每台设备填同一采样时段的捕获数。空白表示缺测，0 表示零捕获。</p><div id="counts" class="counts"></div><label>影响半径（图纸像素） <input name="radius" type="number" required min="10" max="800" step="1" value="220"></label> <button type="submit">重新估算</button><p id="status" aria-live="polite"></p></form></details></section><footer>底图使用局部图纸坐标，分区边界为演示划定。读数和模型结果均为演示。</footer>
+</main><script>const gis={"coordinateSystem":{"type":"local-image","unit":"px","origin":"top-left","width":768,"height":747,"metersPerPixel":null},"boundary":[[224,22],[610,22],[726,43],[712,365],[691,618],[647,713],[41,713],[41,234],[224,234],[224,22]],"buildings":[[[63,177],[204,177],[204,271],[63,271],[63,177]],[[54,493],[165,493],[165,691],[54,691],[54,493]],[[262,515],[479,515],[479,566],[262,566],[262,515]],[[479,314],[606,314],[606,561],[479,561],[479,314]]],"zones":[{"name":"中央空地","polygon":[[337,380],[446,380],[446,484],[337,484],[337,380]]},{"name":"北侧健身区","polygon":[[318,151],[357,120],[423,128],[454,173],[465,220],[401,213],[346,222],[318,192],[318,151]]}],"traps":[{"id":"M01","x":254,"y":162},{"id":"M02","x":450,"y":237},{"id":"M03","x":657,"y":155},{"id":"M04","x":207,"y":362},{"id":"M05","x":447,"y":350},{"id":"M06","x":651,"y":465},{"id":"M07","x":199,"y":621},{"id":"M08","x":417,"y":616},{"id":"M09","x":659,"y":643}]};
+const demo=[6,3,8,7,12,23,5,9,17];
+const form=document.querySelector('#model');
+const fields=document.querySelector('#counts');
+fields.innerHTML=gis.traps.map(({id},i)=>'<label>'+id+' <input name="'+id+'" type="number" min="0" max="1000000" step="1" inputmode="numeric" value="'+demo[i]+'"></label>').join('');
+function inside(x,y,polygon){
+  let hit=false;
+  for(let i=0,j=polygon.length-1;i<polygon.length;j=i++){
+    const [a,b]=polygon[i], [c,d]=polygon[j];
+    if((b>y)!==(d>y) && x<(c-a)*(y-b)/(d-b)+a) hit=!hit;
+  }
+  return hit;
+}
+function estimate(x,y,points,radius){
+  const nearby=points.map(point=>({...point,d:Math.hypot(x-point.x,y-point.y)})).filter(point=>point.d<=radius);
+  if(nearby.length<2) return null;
+  const exact=nearby.find(point=>point.d===0);
+  if(exact) return exact.value;
+  let weighted=0,weights=0;
+  for(const {d,value} of nearby){
+    const weight=(1-d/radius)/(d*d);
+    weights+=weight;
+    weighted+=weight*value;
+  }
+  return weights>0?weighted/weights:null;
+}
+function calculate(){
+  const points=gis.traps.flatMap(trap=>{
+    const input=form.elements.namedItem(trap.id);
+    return input.value===''?[]:[{...trap,value:input.valueAsNumber}];
+  });
+  const radius=form.elements.radius.valueAsNumber;
+  const step=10;
+  const summaries=gis.zones.map(()=>({total:0,covered:0,sum:0}));
+  const grid=[];
+  const color=value=>value<6?'#72dfb6':value<12?'#cedf98':value<18?'#ffda87':'#ffad62';
+  for(let y=5;y<gis.coordinateSystem.height;y+=step){
+    for(let x=5;x<gis.coordinateSystem.width;x+=step){
+      if(!inside(x,y,gis.boundary)||gis.buildings.some(p=>inside(x,y,p))) continue;
+      const value=estimate(x,y,points,radius);
+      if(value!==null) grid.push('<rect x="'+(x-5)+'" y="'+(y-5)+'" width="10" height="10" fill="'+color(value)+'"/>');
+      gis.zones.forEach(({polygon},i)=>{
+        if(!inside(x,y,polygon)) return;
+        const stat=summaries[i];
+        stat.total++;
+        if(value!==null){stat.covered++;stat.sum+=value;}
+      });
+    }
+  }
+  document.querySelector('#surface').innerHTML=grid.join('');
+  document.querySelector('#areas').innerHTML=gis.zones.map(({polygon},i)=>{
+    const [x,y]=polygon[0];
+    return '<polygon points="'+polygon.map(p=>p.join(',')).join(' ')+'" fill="none" stroke="#e9ffec" stroke-width="2" stroke-dasharray="5 4"/><text x="'+x+'" y="'+(y-6)+'" fill="#effaf0" font-size="21" paint-order="stroke" stroke="#102622" stroke-width="5">'+gis.zones[i].name+'</text>';
+  }).join('');
+  document.querySelector('#results').innerHTML=summaries.map(({total,covered,sum},i)=>{
+    const percent=Math.round(100*covered/total);
+    const reading=covered===0||covered/total<.5?'覆盖不足，暂不估算':(sum/covered).toFixed(1)+' 只/台·时段';
+    return '<p><strong>'+gis.zones[i].name+' · '+reading+'</strong><br><small>估算覆盖 '+percent+'% · 按已覆盖网格取平均</small></p>';
+  }).join('');
+  document.querySelector('#status').textContent='已计算 · '+points.length+' 个有效点位 · 影响半径 '+radius+' px';
+}
+form.addEventListener('submit',event=>{event.preventDefault();calculate();});
+calculate();</script></body></html>
