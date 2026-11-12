@@ -1,0 +1,6 @@
+{
+  "source_id": "vendor01",
+  "csv_url": "https://example.invalid/replace-with-vendor-csv-export",
+  "pg_service": "mosquito_ingest",
+  "psql": "C:\\Program Files\\QGIS 3.30.3\\bin\\psql.exe"
+}

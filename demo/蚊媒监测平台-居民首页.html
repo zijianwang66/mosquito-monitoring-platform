@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>住区 · 居民防蚊提醒</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.55 system-ui, "Microsoft YaHei", sans-serif; background: #0c211f; color: #f2f8ed; }
+h1, h2, p { margin: 0; }
+button, select { font: inherit; }
+a { color: inherit; text-underline-offset: 3px; }
+a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid #31775e; outline-offset: 3px; }
+header, main { max-width: 740px; margin: auto; padding-inline: 20px; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-block: 19px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; }
+.brand svg { flex: none; }
+.demo { font-size: 12px; color: #ffe0a0; border: 1px solid #756444; border-radius: 5px; padding: 4px 8px; white-space: nowrap; }
+main { padding-bottom: 24px; }
+.notice { background: #e5f4e6; color: #17372e; border-radius: 16px; padding: 22px 24px; }
+.notice h1 { font-size: 27px; line-height: 1.25; margin-bottom: 9px; }
+.notice p, .notice footer { font-size: 14px; color: #3b5d51; }
+.controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.controls button { background: transparent; border: 1px solid #537464; color: inherit; border-radius: 5px; padding: 4px 9px; }
+#resident-alert-status { margin-top: 12px; }
+.alerts { list-style: none; padding: 0; margin: 10px 0; }
+.alerts li { padding: 10px 0; border-top: 1px solid #bcd2bf; }
+.alerts li a { font-weight: 650; }
+.alerts li p { margin-top: 3px; }
+.notice footer { border-top: 1px solid #bcd2bf; padding-top: 10px; }
+@media (max-width: 480px) {
+  header, main { padding-inline: 13px; }
+  .notice { padding: 18px 15px; }
+  .notice h1 { font-size: 24px; }
+}
+</style></head>
+<body><header><div class="brand"><svg width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="7" fill="#1f4439" stroke="#54786b"/><path d="M7 18h4l3-8 4 11 2-5h3" stroke="#a4edcc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>住区 · 防蚊提醒</div><span class="demo">演示示例</span></header>
+<main>
+  <section class="notice" aria-labelledby="suggestion">
+    <h1 id="suggestion">住区防蚊时段提示</h1>
+    <p>以下时段根据模拟监测记录生成。</p>
+    <div class="controls">
+      <label for="resident-date">日期</label>
+      <select id="resident-date">
+        <option value="2026-11-01">11 月 1 日</option>
+        <option value="2026-11-02">11 月 2 日</option>
+      </select>
+      <button type="button" id="resident-refresh">刷新</button>
+      <a id="resident-map-link" href="./蚊媒监测驾驶舱.html?hourly=1#plot">查看点位地图</a>
+    </div>
+    <p id="resident-alert-status" role="status">正在加载时段提示。</p>
+    <ul class="alerts" id="resident-alerts" aria-label="有演示预警的点位及时段"></ul>
+    <footer>演示阈值仅用于平台联调。实际防蚊提醒以物业或疾控发布为准。</footer>
+  </section>
+</main>
+<script src="./住区2米网格数据.js" defer></script>
+<script src="./蚊媒数据入库/demo-point-layout.js" defer></script>
+<script src="./蚊媒数据入库/demo-alerts.js" defer></script>
+</body></html>

@@ -1,0 +1,114 @@
+{
+  "1": [
+    {
+      "day": "2026-11-01",
+      "mean": 5.375,
+      "median": 5.5,
+      "valid_count": 24,
+      "missing_value_count": 0
+    },
+    {
+      "day": "2026-11-02",
+      "mean": 4.416666666666667,
+      "median": 4,
+      "valid_count": 24,
+      "missing_value_count": 0
+    }
+  ],
+  "2": [
+    {
+      "day": "2026-11-01",
+      "mean": 4.708333333333333,
+      "median": 4.5,
+      "valid_count": 24,
+      "missing_value_count": 0
+    },
+    {
+      "day": "2026-11-02",
+      "mean": 4.083333333333333,
+      "median": 4,
+      "valid_count": 24,
+      "missing_value_count": 0
+    }
+  ],
+  "3": [
+    {
+      "day": "2026-11-01",
+      "mean": 27,
+      "median": 29.5,
+      "valid_count": 24,
+      "missing_value_count": 0
+    },
+    {
+      "day": "2026-11-02",
+      "mean": 25.416666666666668,
+      "median": 29,
+      "valid_count": 24,
+      "missing_value_count": 0
+    }
+  ],
+  "4": [
+    {
+      "day": "2026-11-01",
+      "mean": 3.25,
+      "median": 3,
+      "valid_count": 24,
+      "missing_value_count": 0
+    },
+    {
+      "day": "2026-11-02",
+      "mean": 5.041666666666667,
+      "median": 5,
+      "valid_count": 24,
+      "missing_value_count": 0
+    }
+  ],
+  "5": [
+    {
+      "day": "2026-11-01",
+      "mean": 5.25,
+      "median": 6,
+      "valid_count": 24,
+      "missing_value_count": 0
+    },
+    {
+      "day": "2026-11-02",
+      "mean": 4.333333333333333,
+      "median": 4,
+      "valid_count": 24,
+      "missing_value_count": 0
+    }
+  ],
+  "6": [
+    {
+      "day": "2026-11-01",
+      "mean": 4.416666666666667,
+      "median": 4.5,
+      "valid_count": 24,
+      "missing_value_count": 0
+    },
+    {
+      "day": "2026-11-02",
+      "mean": 3.3333333333333335,
+      "median": 3.5,
+      "valid_count": 24,
+      "missing_value_count": 0
+    }
+  ],
+  "7": [
+    {
+      "day": "2026-11-01",
+      "mean": 26.541666666666668,
+      "median": 29.5,
+      "valid_count": 24,
+      "missing_value_count": 0
+    },
+    {
+      "day": "2026-11-02",
+      "mean": 26.75,
+      "median": 29,
+      "valid_count": 24,
+      "missing_value_count": 0
+    }
+  ]
+}

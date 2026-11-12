@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6ee">
+  <title>住区防蚊 · 珠江未来小屋</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; background-color: #fcfcfc; color: #1a1a1a; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3 { margin-top: 0; font-weight: 600; line-height: 1.2; }
+    img { max-width: 100%; height: auto; display: block; }
+    button, input { font: inherit; }
+
+    :root {
+      color-scheme: light;
+      --paper: #f8f6ee;
+      --ink: #20372e;
+      --muted: #566b5e;
+      --green: #2b654e;
+      --line: #d6ded0;
+      --warning: #89442f;
+    }
+    body { background: #e7ece2; color: var(--ink); font-family: "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif; }
+    ::selection { background: #c6dec9; color: var(--ink); }
+    p, figure, dl, dd { margin: 0; }
+    button, select { color: inherit; }
+    button { cursor: pointer; }
+    :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+    [hidden] { display: none !important; }
+    .dashboard {
+      width: min(100%, 500px);
+      min-height: 100svh;
+      margin-inline: auto;
+      padding: 14px clamp(14px, 4.5vw, 22px) max(14px, env(safe-area-inset-bottom));
+      background: var(--paper);
+    }
+    .heading, .map-heading, .map-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .heading { margin-bottom: 12px; }
+    h1 { margin: 0 0 3px; font-size: clamp(23px, 6.8vw, 31px); letter-spacing: -.035em; font-weight: 750; }
+    .location { color: var(--muted); font-size: 12px; }
+    .scenario { align-self: center; max-width: 48%; }
+    .scenario select {
+      min-height: 44px;
+      max-width: 100%;
+      padding: 6px 5px 6px 8px;
+      border: 1px solid #cdd9ca;
+      border-radius: 8px;
+      background: #eef2e7;
+      font: 12px "Microsoft YaHei UI", system-ui, sans-serif;
+    }
+
+    .report {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) clamp(82px, 26vw, 122px);
+      align-items: center;
+      gap: 7px;
+      border-radius: 14px;
+      background: #e6eedf;
+      overflow: hidden;
+      padding: 9px 8px 9px 12px;
+    }
+    .report[data-tone="high"] { background: #f3e6d4; }
+    .report[data-tone="unknown"] { background: #ecebe1; }
+    .report-name { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    .report h2 { font-size: clamp(18px, 5.35vw, 24px); letter-spacing: -.035em; margin: 0 0 5px; font-weight: 750; }
+    .report-tip { font-size: 12px; color: #3a5547; line-height: 1.5; }
+    .report[data-tone="high"] h2, .report[data-tone="high"] .risk-grade { color: var(--warning); }
+    .portrait {
+      position: relative;
+      align-self: stretch;
+      min-height: 92px;
+      overflow: hidden;
+      border-radius: 9px;
+      background: #d8e5d2;
+    }
+    .portrait img { width: 100%; height: 100%; position: absolute; object-fit: cover; object-position: 50% 44%; }
+    .risk-grade { display: inline-block; margin-left: 5px; color: var(--green); font-weight: 700; }
+    .report[data-tone="unknown"] .risk-grade { color: var(--muted); }
+
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; margin-block: 12px; }
+    .metric { min-width: 0; }
+    .metric + .metric { border-left: 1px solid var(--line); padding-left: 12px; }
+    .metric dt { color: var(--muted); font-size: 11px; }
+    .metric dd { font-size: 12px; color: var(--muted); line-height: 1.2; }
+    .metric strong { color: var(--ink); font: 650 25px/1.1 "Bahnschrift", "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; margin-right: 4px; }
+    .metric strong[data-tone="high"] { color: var(--warning); }
+
+    .map { background: #faf9f3; border: 1px solid #cdd8c9; border-radius: 13px; overflow: hidden; }
+    .map-heading { padding: 0 10px; }
+    .map-heading h2 { margin: 0; font-size: 15px; font-weight: 700; }
+    .zoom-controls { display: flex; align-items: center; gap: 2px; }
+    .zoom-controls button {
+      min-height: 44px;
+      min-width: 40px;
+      padding: 0 5px;
+      background: transparent;
+      border: 0;
+      color: var(--green);
+      font: 650 17px/1 "Segoe UI", sans-serif;
+    }
+    .zoom-controls button:disabled { color: #929e8f; cursor: default; }
+    .zoom-controls #zoom-reset { min-width: 46px; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .map-controls { display: flex; align-items: center; gap: 8px; padding: 0 10px 3px; }
+    .opacity-control {
+      flex: 1;
+      display: grid;
+      grid-template-columns: auto minmax(35px, 1fr) 4ch;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .opacity-control input { width: 100%; min-width: 0; height: 38px; margin: 0; accent-color: var(--green); }
+    .opacity-control output { text-align: right; font-variant-numeric: tabular-nums; }
+    .map-action {
+      flex: none;
+      min-height: 38px;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      color: var(--green);
+      font-size: 12px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    #map-replay {
+      padding-inline: 6px;
+      border: 1px solid #d4e0d0;
+      border-radius: 6px;
+      background: #eaf0e5;
+      text-decoration: none;
+    }
+    #map-replay:hover { background: #dfeada; }
+    .plot { position: relative; margin: 0 7px; aspect-ratio: 76 / 70; background: #e9ecdf; border-radius: 7px; overflow: hidden; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: pan-y pinch-zoom; }
+    .plot[data-zoomed="true"] canvas { touch-action: none; cursor: grab; }
+    .plot[data-zoomed="true"] canvas.dragging { cursor: grabbing; }
+    canvas:focus-visible { outline-offset: -3px; }
+    .marker {
+      position: absolute;
+      top: var(--y);
+      left: var(--x);
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: 0;
+      padding: 0;
+      transform: translate(-50%, -50%);
+    }
+    .marker span {
+      display: grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      border: 1.5px solid #fffdf6;
+      border-radius: 50%;
+      background: #153f52;
+      box-shadow: 0 1px 3px #1b34294d;
+      color: #fff;
+      font: 700 11px/1 "Segoe UI", sans-serif;
+    }
+    .marker[aria-pressed="true"] span { outline: 2px solid #153f52; outline-offset: 2px; }
+    .marker[data-missing="true"] span { background: #f5f4e9; border: 1.5px dashed #61756b; box-shadow: none; color: #36564c; }
+    .map-caption { padding: 7px 9px 8px; color: var(--muted); font-size: 11px; }
+    .heat-scale { margin: 1px 0 6px; font-variant-numeric: tabular-nums; }
+    .heat-ramp { height: 7px; border-radius: 3px; opacity: .8; }
+    .heat-ticks { position: relative; height: 18px; margin-top: 2px; }
+    .heat-ticks span { position: absolute; transform: translateX(-50%); }
+    .heat-ticks span:first-child { transform: none; }
+    .heat-ticks span:last-child { transform: translateX(-100%); }
+    .map-meta { flex-wrap: wrap; gap: 4px 8px; }
+    .legend { display: flex; flex-wrap: wrap; gap: 2px 8px; }
+    .legend span { white-space: nowrap; }
+    .legend i { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 2px; background: #b6a58f; }
+    .legend .reference-key { border: 1px dashed #857358; border-radius: 50%; background: #faf0d5; }
+    .legend .no-data-key { background: #dadbd4; border: 1px solid #aaaea4; }
+    .map-reading { margin-top: 7px; padding: 6px 8px; border-radius: 5px; background: #eaf0e6; color: #29493d; font-size: 12px; }
+    .grid-insights { margin-top: 12px; scroll-margin-block: 10px; }
+    .insight-heading, .trend-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .insight-heading { margin-bottom: 7px; }
+    .insight-heading h2, .trend-heading h3 { margin: 0; font-size: 14px; }
+    .insight-heading span, .trend-heading span { color: var(--muted); font-size: 11px; }
+    .overview-link { display: inline-block; margin-top: 8px; padding: 5px 0; color: var(--muted); font-size: 12px; text-underline-offset: 3px; }
+    .category-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .category-card { padding: 8px; border-radius: 9px; background: #eff2e8; border: 1px solid #d8e0d4; }
+    .category-card dt { color: var(--muted); font-size: 11px; }
+    .category-card dt::before, .trend-key::before {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      margin-right: 4px;
+      border-radius: 50%;
+      background: var(--series-color);
+      content: "";
+    }
+    .category-card dd { margin-top: 4px; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 4px; }
+    .category-card strong { font: 650 20px/1.1 "Bahnschrift", "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; }
+    .category-card dd span { color: var(--muted); font-size: 10px; white-space: nowrap; }
+    .grid-insights { --female: #a44965; --male: #376c99; --ant: #377858; }
+    .series-female { --series-color: var(--female); }
+    .series-male { --series-color: var(--male); }
+    .series-ant { --series-color: var(--ant); }
+    .trend-panel { margin-top: 7px; padding: 9px; border: 1px solid #d8e0d4; border-radius: 11px; background: #fcfbf5; }
+    .trend-chart { width: 100%; height: 132px; margin-block: 4px; }
+    .trend-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--muted); font-size: 11px; }
+    .trend-values { margin-top: 4px; font-size: 11px; color: var(--muted); }
+    .trend-values summary { min-height: 30px; padding-block: 6px; cursor: pointer; color: var(--green); }
+    .trend-values table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    .trend-values th, .trend-values td { padding: 4px; text-align: right; border-top: 1px solid var(--line); }
+    .trend-values th:first-child { text-align: left; }
+    .caption-note { margin-top: 4px; }
+    .risk-area { color: var(--warning); font-weight: 650; }
+    .data-time { margin-top: 7px; color: var(--muted); font-size: 11px; }
+    .daily-panel { margin: 12px 0 0; }
+    .daily-panel .trend-heading { align-items: center; flex-wrap: wrap; }
+    .daily-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .daily-controls select { font: inherit; color: inherit; max-width: 100%; }
+    .daily-controls button { min-height: 32px; }
+    .daily-status { margin: 8px 0; color: var(--muted); font-size: 12px; }
+    .daily-table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .daily-table th, .daily-table td { border-top: 1px solid #d8e0d4; padding: 7px 4px; text-align: left; }
+    .daily-table th:first-child { white-space: nowrap; }
+    .daily-table td:last-child, .daily-table thead th:last-child { text-align: right; white-space: nowrap; }
+    .daily-value { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+    .daily-bar { height: 8px; background: #e1e9df; border-radius: 3px; overflow: hidden; }
+    .daily-bar span { display: block; height: 100%; background: #317360; }
+    .hourly-controls { margin-top: 8px; }
+    .hourly-controls label { display: flex; align-items: center; gap: 4px; }
+    .hourly-chart { display: block; width: 100%; height: 116px; }
+    .point-nav {
+      display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px;
+      border-bottom: 1px solid #d1dece; margin-bottom: 9px;
+    }
+    .point-nav button {
+      min-height: 39px; padding: 0; border: 0; border-bottom: 2px solid transparent;
+      background: transparent; color: var(--muted); font-size: 12px; white-space: nowrap;
+    }
+    .point-nav button[aria-pressed="true"] {
+      border-bottom-color: var(--green); color: var(--ink); font-size: 16px; font-weight: 750;
+    }
+    .point-nav button:hover { background: #e4ece0; }
+    .point-nav button:focus-visible { outline-offset: -3px; }
+    .demo-alerts { margin-top: 12px; border-top: 1px solid #d8e0d4; padding-top: 10px; }
+    .demo-alerts .trend-heading h4 { margin: 0; font-size: 14px; }
+    .demo-alert-list { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+    .demo-alert-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; border-top: 1px solid #d8e0d4; }
+    .demo-alert-list button { min-height: 36px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; clip-path: inset(50%); overflow: hidden; white-space: nowrap; }
+
+    @keyframes greet { from { opacity: .6; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes map-in { from { opacity: .5; } to { opacity: 1; } }
+    @media (prefers-reduced-motion: no-preference) {
+      .report-update { animation: greet 350ms cubic-bezier(.16, 1, .3, 1); }
+      .plot { animation: map-in 450ms ease-out; }
+    }
+    @media (min-width: 560px) {
+      body { padding-block: 16px; }
+      .dashboard { min-height: auto; border-radius: 16px; border: 1px solid #d2dbce; }
+    }
+  </style>
+</head>
+<body>
+  <main class="dashboard">
+    <header class="heading">
+      <div><h1>住区防蚊</h1><p class="location">珠江未来小屋</p></div>
+      <label class="scenario">
+        <span class="sr-only">切换演示场景</span>
+        <select id="scenario">
+          <option value="hourly">小时统计</option>
+          <option value="complete" selected>低风险演示</option>
+          <option value="high">风险偏高演示</option>
+          <option value="incomplete">数据不足演示</option>
+        </select>
+      </label>
+    </header>
+
+    <section class="report" id="report" aria-labelledby="report-title" aria-live="polite" aria-atomic="true">
+      <div class="report-copy">
+        <p class="report-name">虚拟播报员 <span id="risk-grade" class="risk-grade"></span></p>
+        <h2 id="report-title"></h2>
+        <p class="report-tip" id="report-tip"></p>
+      </div>
+      <div class="portrait"><img src="./住区播报员.webp" alt="" width="360" height="360"></div>
+    </section>
+
+    <dl class="metrics" aria-label="监测摘要">
+      <div class="metric"><dt>每设备平均捕获</dt><dd><strong id="average">—</strong><span id="average-unit">只/台</span></dd></div>
+      <div class="metric"><dt>高风险区域</dt><dd><strong id="risk-count">—</strong><span id="risk-unit">待评估</span></dd></div>
+    </dl>
+
+    <figure class="map" aria-labelledby="map-title">
+      <div class="map-heading">
+        <h2 id="map-title">2 米网格估算</h2>
+        <div class="zoom-controls" role="group" aria-label="地图缩放">
+          <button type="button" id="zoom-out" aria-label="缩小地图" disabled>−</button>
+          <button type="button" id="zoom-reset" aria-label="恢复全图" title="恢复全图" disabled>100%</button>
+          <button type="button" id="zoom-in" aria-label="放大地图">+</button>
+        </div>
+      </div>
+      <div class="map-controls">
+        <label class="opacity-control" for="heat-opacity">
+          <span>热力透明度</span>
+          <input id="heat-opacity" type="range" min="0" max="100" value="65" aria-valuetext="65%">
+          <output id="heat-opacity-value" for="heat-opacity">65%</output>
+        </label>
+        <button type="button" class="map-action" id="map-switch" aria-controls="plot" aria-pressed="false">显示格线</button>
+        <button type="button" class="map-action" id="map-replay" aria-controls="plot" title="重播上期到本期的地图颜色变化" hidden>重播更新</button>
+      </div>
+      <div class="plot" id="plot">
+        <canvas id="map-drawing" tabindex="0" aria-label="场地估算地图。放大后可拖动，可点击网格或按方向键查看数值。"></canvas>
+      </div>
+      <figcaption class="map-caption">
+        <div class="heat-scale" id="heat-scale" aria-label="连续估算色带，单位为只每台">
+          <div class="heat-ramp" id="heat-ramp"></div>
+          <div class="heat-ticks" id="heat-ticks"></div>
+        </div>
+        <div class="map-meta">
+          <div class="legend" aria-label="参考范围"><span><i class="no-data-key"></i>暂无资料</span><span><i class="reference-key"></i>参考圈</span></div>
+          <span id="sample-summary"></span>
+        </div>
+        <p class="map-reading" id="map-reading" role="status">点设备或网格查看数值。</p>
+        <p class="caption-note" id="grid-note"></p>
+        <p id="risk-area" class="caption-note risk-area" hidden>东侧绿地 · 独立风险演示</p>
+      </figcaption>
+    </figure>
+
+    <section class="trend-panel daily-panel" id="hourly-panel" aria-labelledby="hourly-title" hidden>
+      <header class="trend-heading">
+        <h3 id="hourly-title">小时趋势</h3>
+        <a class="map-action" href="./蚊媒监测设备总览.html">设备总览</a>
+      </header>
+      <div class="point-nav" id="hourly-points" role="group" aria-label="监测点位"></div>
+      <div class="daily-controls hourly-controls">
+        <label>日期
+          <select id="hourly-date">
+            <option value="2026-11-01">11 月 1 日</option>
+            <option value="2026-11-02">11 月 2 日</option>
+          </select>
+        </label>
+        <label>时段 <select id="hourly-hour" aria-label="小时"></select></label>
+        <button type="button" class="map-action" id="hourly-refresh">刷新</button>
+      </div>
+      <p class="daily-status" id="hourly-status" role="status"></p>
+      <canvas class="hourly-chart" id="hourly-chart" role="img" aria-label="逐小时最大单条蚊数"></canvas>
+      <section class="demo-alerts" aria-labelledby="demo-alerts-title">
+        <header class="trend-heading">
+          <h4 id="demo-alerts-title">演示预警</h4>
+          <div class="daily-controls">
+            <label for="demo-alerts-scope">范围</label>
+            <select id="demo-alerts-scope">
+              <option value="hour">当前小时</option>
+              <option value="day">全天</option>
+            </select>
+            <a class="map-action" id="demo-resident-link" href="./蚊媒监测平台-居民首页.html">居民提示</a>
+          </div>
+        </header>
+        <p class="daily-status">触发条件：单条六类蚊数合计大于 25。每个点位每小时显示最高的一条。</p>
+        <p class="daily-status" id="demo-alerts-status" role="status"></p>
+        <ol class="demo-alert-list" id="demo-alerts-list"></ol>
+      </section>
+    </section>
+
+    <section class="grid-insights" id="grid-insights" aria-labelledby="insight-title" hidden>
+      <header class="insight-heading"><h2 id="insight-title">格点分类读数</h2><span id="insight-window">近 24 小时 · 演示估算</span></header>
+      <dl class="category-cards">
+        <div class="category-card series-female"><dt>雌蚊</dt><dd><strong id="female-count">—</strong><span>只/台</span></dd></div>
+        <div class="category-card series-male"><dt>雄蚊</dt><dd><strong id="male-count">—</strong><span>只/台</span></dd></div>
+        <div class="category-card series-ant"><dt>飞蚁</dt><dd><strong id="ant-count">—</strong><span>只/台</span></dd></div>
+      </dl>
+      <figure class="trend-panel" aria-labelledby="trend-title">
+        <figcaption class="trend-heading"><h3 id="trend-title">近 7 天趋势</h3><span id="trend-unit">只/台</span></figcaption>
+        <canvas class="trend-chart" id="trend-chart" role="img" aria-label="雌蚊、雄蚊和飞蚁演示估算趋势"></canvas>
+        <div class="trend-legend"><span class="trend-key series-female">雌蚊</span><span class="trend-key series-male">雄蚊</span><span class="trend-key series-ant">飞蚁</span></div>
+        <details class="trend-values"><summary>查看每日数值</summary>
+          <table id="trend-table" aria-label="近 7 天演示估算（只/台）"><thead><tr><th scope="col">日期</th><th scope="col">雌蚊</th><th scope="col">雄蚊</th><th scope="col">飞蚁</th></tr></thead><tbody id="trend-values"></tbody></table>
+        </details>
+      </figure>
+      <a class="overview-link" id="overview-link" href="./蚊媒监测设备总览.html" hidden>返回设备总览</a>
+    </section>
+
+    <p class="data-time" id="period-summary">演示读数 · 统计窗口 24 小时 · 截至 <time id="period-end"></time></p>
+
+    <section class="trend-panel daily-panel" id="point7-daily" aria-labelledby="point7-title">
+      <header class="trend-heading">
+        <h3 id="point7-title">7 号点位 · 日趋势</h3>
+        <div class="daily-controls">
+          <label for="daily-metric">统计指标</label>
+          <select id="daily-metric">
+            <option value="mean">均值</option>
+            <option value="median">中位数</option>
+          </select>
+          <button type="button" class="map-action" id="daily-refresh">刷新</button>
+        </div>
+      </header>
+      <p class="daily-status" id="daily-status" role="status">正在加载日统计。</p>
+      <table class="daily-table" id="daily-table" aria-label="7 号点位六类蚊数日统计" hidden>
+        <thead><tr><th scope="col">日期</th><th scope="col" id="daily-value-label">均值（只/条）</th><th scope="col">有效样本</th></tr></thead>
+        <tbody id="daily-rows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="./住区2米网格数据.js"></script>
+  <script src="./蚊媒数据入库/demo-point-layout.js"></script>
+  <script src="./蚊媒数据入库/demo-alerts.js"></script>
+  <script src="./蚊媒数据入库/demo-hourly.js"></script>
+  <script src="./蚊媒数据入库/demo-trend.js" defer></script>
+  <script>
+(function(){
+  const byId = id => document.getElementById(id);
+  const canvas = byId('map-drawing');
+  const plot = byId('plot');
+  const selector = byId('scenario');
+  const note = byId('grid-note');
+  const data = globalThis.demoSiteGridData;
+  if (!data) {
+    note.textContent = '网格数据文件未加载。请将网页和配套文件放在同一目录。';
+    return;
+  }
+
+  const scenarios = {
+    hourly: {
+      tone: 'unknown', riskCount: null, grade: '模拟数据',
+      title: '小时监测', tip: '选择日期和小时，查看该时段各点位的最大单条蚊数。',
+    },
+    complete: {
+      tone: 'low', riskCount: 0, grade: '演示 · 风险较低',
+      title: '户外活动可照常', tip: '想出门走走，可以照常安排，记得做好日常防蚊。',
+    },
+    high: {
+      tone: 'high', riskCount: 1, grade: '演示 · 风险偏高',
+      title: '外出记得加强防蚊', tip: '经过绿地或树荫时，按产品说明使用驱蚊剂。',
+    },
+    incomplete: {
+      tone: 'unknown', riskCount: null, missing: 7, grade: '演示 · 数据不足',
+      title: '当前风险待评估', tip: '7 号设备模拟缺报，地图按其他设备读数更新。',
+    },
+  };
+  const [west, south, east, north] = data.bounds;
+  const cellSize = data.cellSize;
+  const radius = data.referenceRadiusM;
+  const number = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1 });
+  const baseMap = new Image();
+  const heatLayer = document.createElement('canvas');
+  heatLayer.width = Math.round(data.maxX * 4);
+  heatLayer.height = Math.round(data.maxY * 4);
+  const heatContext = heatLayer.getContext('2d');
+  const previousHeatLayer = heatLayer.cloneNode();
+  const flipLayer = heatLayer.cloneNode();
+  const flipContext = flipLayer.getContext('2d');
+  const buildings = new Path2D();
+  for (const outline of data.buildingOutlines) {
+    buildings.moveTo(...outline[0]);
+    for (const point of outline.slice(1)) buildings.lineTo(...point);
+    buildings.closePath();
+  }
+  const zoomLevels = [1, 1.5, 2, 3, 4];
+  const view = { level: 0, x: (west + east) / 2, y: (south + north) / 2 };
+  const zoomIn = byId('zoom-in');
+  const zoomOut = byId('zoom-out');
+  const zoomReset = byId('zoom-reset');
+  const opacitySlider = byId('heat-opacity');
+  const replay = byId('map-replay');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const insights = byId('grid-insights');
+  const trendCanvas = byId('trend-chart');
+  const statValues = ['female-count', 'male-count', 'ant-count'].map(byId);
+  const trendStyle = getComputedStyle(insights);
+  const trendColors = ['--female', '--male', '--ant'].map(name => trendStyle.getPropertyValue(name).trim());
+  const dateLabel = new Intl.DateTimeFormat('en-US', { month: '2-digit', day: '2-digit', timeZone: 'Asia/Shanghai' });
+  const dates = data.devices[0].sampleCaptures.map((_, index, history) =>
+    dateLabel.format(Date.parse(data.periodEnd) - (history.length - 1 - index) * 86400000));
+  const roundReading = value => Math.round((value + 1e-10) * 10) / 10;
+  let drag = null;
+  let ignoreMapClick = false;
+  let showGrid = false;
+  let selection = null;
+  let counts = [];
+  let gridReadings = [];
+  let trendSeries = [];
+  let heatImage = null;
+  let heatTransition = null;
+  let heatFrame = 0;
+  let hourlyReadings = new Map();
+
+  const colorStops = [[0, '#337ac8'], [5, '#7775c2'], [10, '#ae548c'], [15, '#d74c56'], [25, '#b82e42']];
+  const colorMax = colorStops[colorStops.length - 1][0];
+  for (const [value] of colorStops) {
+    const tick = document.createElement('span');
+    tick.textContent = value === colorMax ? `${value}+` : value;
+    tick.style.left = `${value / colorMax * 100}%`;
+    byId('heat-ticks').append(tick);
+  }
+
+  // Build the color ramp once so spatial interpolation only looks up RGB values.
+  const paletteCanvas = document.createElement('canvas');
+  paletteCanvas.width = colorMax * 10 + 1;
+  paletteCanvas.height = 1;
+  const paletteContext = paletteCanvas.getContext('2d', { willReadFrequently: true });
+  paletteContext.fillStyle = 'color-mix(in oklab, #337ac8, #7775c2)';
+  const useOklab = paletteContext.fillStyle !== '#000000';
+  if (useOklab) {
+    let stop = 0;
+    for (let i = 0; i < paletteCanvas.width; i++) {
+      const value = i / 10;
+      if (value > colorStops[stop + 1][0]) stop++;
+      const [fromValue, fromColor] = colorStops[stop];
+      const [toValue, toColor] = colorStops[stop + 1];
+      const fromPercent = (toValue - value) / (toValue - fromValue) * 100;
+      paletteContext.fillStyle = `color-mix(in oklab, ${fromColor} ${fromPercent}%, ${toColor})`;
+      paletteContext.fillRect(i, 0, 1, 1);
+    }
+  } else {
+    const gradient = paletteContext.createLinearGradient(0.5, 0, paletteCanvas.width - 0.5, 0);
+    for (const [value, color] of colorStops) gradient.addColorStop(value / colorMax, color);
+    paletteContext.fillStyle = gradient;
+    paletteContext.fillRect(0, 0, paletteCanvas.width, 1);
+  }
+  const palette = paletteContext.getImageData(0, 0, paletteCanvas.width, 1).data;
+  const stopList = colorStops.map(([value, color]) => `${color} ${value / colorMax * 100}%`);
+  byId('heat-ramp').style.background = `linear-gradient(to right${useOklab ? ' in oklab' : ''}, ${stopList.join(', ')})`;
+
+  function neighborCells(position, count, extent) {
+    const finalStart = (count - 1) * cellSize;
+    const finalCenter = (finalStart + extent) / 2;
+    const previousCenter = finalStart - cellSize / 2;
+    const fraction = position <= previousCenter
+      ? position / cellSize - 0.5
+      : count - 2 + (position - previousCenter) / (finalCenter - previousCenter);
+    const clamped = Math.min(count - 1, Math.max(0, fraction));
+    const first = Math.floor(clamped);
+    return [first, Math.min(first + 1, count - 1), clamped - first, Math.floor(position / cellSize)];
+  }
+
+  const xSamples = Array.from({ length: heatLayer.width }, (_, i) =>
+    neighborCells((i + 0.5) / heatLayer.width * data.maxX, data.columns, data.maxX));
+  const ySamples = Array.from({ length: heatLayer.height }, (_, i) =>
+    neighborCells((1 - (i + 0.5) / heatLayer.height) * data.maxY, data.rows, data.maxY));
+
+  function renderHeatImage(readings) {
+    const image = heatContext.createImageData(heatLayer.width, heatLayer.height);
+    for (const [y, [bottom, top, northWeight, ownerRow]] of ySamples.entries()) {
+      const rows = [[bottom, 1 - northWeight], [top, northWeight]];
+      for (const [x, [left, right, eastWeight, ownerCol]] of xSamples.entries()) {
+        const offset = (y * heatLayer.width + x) * 4;
+        if (readings[ownerRow * data.columns + ownerCol].estimate === null) continue;
+        const columns = [[left, 1 - eastWeight], [right, eastWeight]];
+        let weightedEstimate = 0;
+        let totalWeight = 0;
+        for (const [row, rowWeight] of rows) {
+          for (const [col, colWeight] of columns) {
+            const value = readings[row * data.columns + col].estimate;
+            if (value === null) continue;
+            const weight = rowWeight * colWeight;
+            weightedEstimate += weight * value;
+            totalWeight += weight;
+          }
+        }
+        const value = weightedEstimate / totalWeight;
+        const shade = Math.round(Math.min(colorMax, Math.max(0, value)) * 10) * 4;
+        image.data[offset] = palette[shade];
+        image.data[offset + 1] = palette[shade + 1];
+        image.data[offset + 2] = palette[shade + 2];
+        image.data[offset + 3] = 255;
+      }
+    }
+    return image;
+  }
+
+  const endTime = byId('period-end');
+  endTime.dateTime = data.periodEnd;
+  endTime.textContent = data.periodEnd.slice(5, 16).replace('-', '/').replace('T', ' ');
+
+  function gridId(index) {
+    const row = String(Math.floor(index / data.columns) + 1).padStart(3, '0');
+    const col = String(index % data.columns + 1).padStart(3, '0');
+    return `R${row}-C${col}`;
+  }
+
+  function gridCenter(index) {
+    const x0 = index % data.columns * cellSize;
+    return [(x0 + Math.min(x0 + cellSize, data.maxX)) / 2, (Math.floor(index / data.columns) + 0.5) * cellSize];
+  }
+
+  const gridSources = Array.from({ length: data.columns * data.rows }, (_, index) => {
+    const [x, y] = gridCenter(index);
+    return data.devices.flatMap((device, i) => {
+      const distance = Math.hypot(x - device.x, y - device.y);
+      return distance < radius ? [{ index: i, distance, weight: 1 - distance / radius }] : [];
+    });
+  });
+
+  function estimateCount(sources, read) {
+    if (sources.length === 0) return null;
+    if (sources.length === 1) {
+      const { index, distance } = sources[0];
+      return roundReading(Math.max(0, read(index) - distance / data.singleDecayDistanceM));
+    }
+    const weighted = sources.reduce((sum, source) => sum + source.weight * read(source.index), 0);
+    const weight = sources.reduce((sum, source) => sum + source.weight, 0);
+    return roundReading(weighted / weight);
+  }
+
+  function estimateGrid(readings) {
+    return gridSources.map(candidates => {
+      const sources = candidates.filter(source => readings[source.index] !== null);
+      return { sources, estimate: estimateCount(sources, index => readings[index]) };
+    });
+  }
+
+  function paintHeatImage(layer, image) {
+    const pixels = new Uint8ClampedArray(image.data);
+    const alpha = Math.round(255 * (1 - Number(opacitySlider.value) / 100));
+    for (let offset = 0; offset < pixels.length; offset += 4) {
+      if (pixels[offset + 3]) {
+        pixels[offset + 3] = alpha;
+      } else {
+        // Keep the neutral no-data shading independent of the heat opacity.
+        pixels.set([226, 226, 220, 59], offset);
+      }
+    }
+    layer.getContext('2d').putImageData(new ImageData(pixels, image.width, image.height), 0, 0);
+  }
+
+  function previousDayCounts() {
+    return data.devices.map((device, index) => {
+      const sample = device.sampleCaptures.at(-2);
+      return counts[index] !== null && sample ? sample[0] + sample[1] : null;
+    });
+  }
+
+  const flipDuration = 270;
+  const ringInterval = 86;
+  const pixelsPerMetre = heatLayer.width / data.maxX;
+
+  function startHeatUpdate(beforeCounts, beforeImage) {
+    cancelAnimationFrame(heatFrame);
+    heatTransition = null;
+    if (reducedMotion.matches) return;
+    const changedPoints = data.devices.filter((_, index) => beforeCounts[index] !== counts[index]);
+    if (!changedPoints.length) return;
+    const beforeGrid = estimateGrid(beforeCounts);
+    const tiles = beforeGrid.flatMap(({ estimate }, index) => {
+      if (estimate === null && gridReadings[index].estimate === null) return [];
+      const [x, y] = gridCenter(index);
+      const distance = Math.min(...changedPoints.map(point => Math.hypot(x - point.x, y - point.y)));
+      // Include the adjacent ring because the continuous colors blend between cell centers.
+      if (distance >= radius + cellSize) return [];
+      const col = index % data.columns;
+      const row = Math.floor(index / data.columns);
+      const left = col * cellSize * pixelsPerMetre;
+      const top = (data.maxY - (row + 1) * cellSize) * pixelsPerMetre;
+      const width = Math.min(cellSize * pixelsPerMetre, heatLayer.width - left);
+      const height = cellSize * pixelsPerMetre;
+      const delay = Math.floor(distance / cellSize) * ringInterval + index * 17 % 38;
+      return [{ left, top, width, height, delay }];
+    });
+    if (!tiles.length) return;
+    const image = beforeImage ?? renderHeatImage(beforeGrid);
+    paintHeatImage(previousHeatLayer, image);
+    const end = Math.max(...tiles.map(tile => tile.delay)) + flipDuration;
+    heatTransition = { tiles, image, start: performance.now(), end };
+    drawFlipFrame(heatTransition.start);
+  }
+
+  function drawFlipFrame(now) {
+    const elapsed = now - heatTransition.start;
+    if (elapsed >= heatTransition.end || reducedMotion.matches) {
+      heatTransition = null;
+      drawMap();
+      return;
+    }
+    flipContext.clearRect(0, 0, flipLayer.width, flipLayer.height);
+    flipContext.drawImage(previousHeatLayer, 0, 0);
+    const hingeOpacity = .75 * (1 - Number(opacitySlider.value) / 100);
+    for (const { left, top, width, height, delay } of heatTransition.tiles) {
+      const progress = (elapsed - delay) / flipDuration;
+      if (progress <= 0) continue;
+      flipContext.clearRect(left, top, width, height);
+      if (progress >= 1) {
+        flipContext.drawImage(heatLayer, left, top, width, height, left, top, width, height);
+        continue;
+      }
+      const half = height / 2;
+      const hinge = top + half;
+      // The new top half is behind the closing flap. The new bottom half opens over the old one.
+      flipContext.drawImage(heatLayer, left, top, width, half, left, top, width, half);
+      flipContext.drawImage(previousHeatLayer, left, hinge, width, half, left, hinge, width, half);
+      const closing = progress < .5;
+      const flapHeight = half * Math.abs(Math.cos(progress * Math.PI));
+      if (flapHeight > .05) {
+        const flapTop = closing ? hinge - flapHeight : hinge;
+        flipContext.clearRect(left, flapTop, width, flapHeight);
+        flipContext.drawImage(closing ? previousHeatLayer : heatLayer, left, closing ? top : hinge, width, half,
+          left, flapTop, width, flapHeight);
+      }
+      flipContext.fillStyle = `rgba(31, 54, 49, ${Math.sin(progress * Math.PI) * hingeOpacity})`;
+      flipContext.fillRect(left, hinge - .35, width, .7);
+    }
+    drawMap();
+    heatFrame = requestAnimationFrame(drawFlipFrame);
+  }
+
+  function dailyCategories(gridIndex, day) {
+    const isLatest = day === dates.length - 1;
+    const samples = data.devices.map((device, index) =>
+      isLatest && counts[index] === null ? null : device.sampleCaptures[day]);
+    const sources = gridSources[gridIndex].filter(source => samples[source.index]);
+    if (sources.length === 0) return null;
+
+    const mosquitoes = index => samples[index][0] + samples[index][1];
+    const total = estimateCount(sources, mosquitoes);
+    const rawFemale = sources.reduce((sum, source) => sum + source.weight * samples[source.index][0], 0);
+    const rawTotal = sources.reduce((sum, source) => sum + source.weight * mosquitoes(source.index), 0);
+    const female = rawTotal ? roundReading(total * rawFemale / rawTotal) : 0;
+    return [female, roundReading(total - female), estimateCount(sources, index => samples[index][2])];
+  }
+
+  function drawTrend() {
+    const { width, height } = trendCanvas.getBoundingClientRect();
+    if (!width || !height || !trendSeries.length) return;
+    const ratio = window.devicePixelRatio || 1;
+    trendCanvas.width = Math.round(width * ratio);
+    trendCanvas.height = Math.round(height * ratio);
+    const ctx = trendCanvas.getContext('2d');
+    ctx.scale(trendCanvas.width / width, trendCanvas.height / height);
+    const max = Math.max(1, ...trendSeries.filter(Boolean).flat());
+    const step = Math.max(1, Math.ceil(max / 3));
+    const left = 25;
+    const right = width - 14;
+    const top = 9;
+    const bottom = height - 21;
+    const px = index => left + index / (dates.length - 1) * (right - left);
+    const py = value => bottom - value / (step * 3) * (bottom - top);
+
+    ctx.font = '10px "Segoe UI", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.strokeStyle = '#dfe7db';
+    ctx.fillStyle = '#566b5e';
+    for (let level = 0; level <= 3; level++) {
+      const y = py(level * step);
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+      ctx.fillText(level * step, left - 5, y);
+    }
+    ctx.textAlign = 'center';
+    for (let day = 0; day < dates.length; day += 3) {
+      ctx.fillText(dates[day], px(day), height - 7);
+    }
+
+    for (const [series, color] of trendColors.entries()) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.6;
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      let previous = false;
+      for (const [day, values] of trendSeries.entries()) {
+        if (values) {
+          if (previous) ctx.lineTo(px(day), py(values[series]));
+          else ctx.moveTo(px(day), py(values[series]));
+        }
+        previous = values !== null;
+      }
+      ctx.stroke();
+      for (const [day, values] of trendSeries.entries()) {
+        if (!values) continue;
+        ctx.beginPath();
+        ctx.arc(px(day), py(values[series]), day === dates.length - 1 ? 3 : 2.1, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+    }
+  }
+
+  function showInsights(index, kind = 'cell') {
+    const device = kind === 'device' ? data.devices[index] : null;
+    trendSeries = dates.map((_, day) => {
+      if (!device) return dailyCategories(index, day);
+      return day === dates.length - 1 && counts[index] === null ? null : device.sampleCaptures[day];
+    });
+    insights.hidden = !trendSeries.some(Boolean);
+    if (insights.hidden) return;
+    const unit = device ? '只' : '只/台';
+    const source = device ? '演示读数' : '演示估算';
+    const formatValue = value => value === null ? '—' : value.toFixed(device ? 0 : 1);
+    byId('insight-title').textContent = device ? `${device.id}号设备分类读数` : '格点分类读数';
+    byId('insight-window').textContent = `近 24 小时 · ${source}`;
+    byId('trend-unit').textContent = unit;
+    insights.querySelectorAll('.category-card dd span').forEach(label => { label.textContent = unit; });
+    trendCanvas.setAttribute('aria-label', `雌蚊、雄蚊和飞蚁${source}趋势`);
+    byId('trend-table').setAttribute('aria-label', `近 7 天${source}（${unit}）`);
+    const latest = trendSeries[trendSeries.length - 1];
+    statValues.forEach((element, i) => { element.textContent = formatValue(latest?.[i] ?? null); });
+    const rows = dates.map((date, day) => {
+      const row = document.createElement('tr');
+      const heading = document.createElement('th');
+      heading.scope = 'row';
+      heading.textContent = date;
+      row.append(heading);
+      const values = trendSeries[day];
+      for (const value of values ?? [null, null, null]) {
+        const cell = document.createElement('td');
+        cell.textContent = formatValue(value);
+        row.append(cell);
+      }
+      return row;
+    });
+    byId('trend-values').replaceChildren(...rows);
+    drawTrend();
+  }
+
+  function projection(width, height) {
+    const scaleX = width * zoomLevels[view.level] / (east - west);
+    const scaleY = height * zoomLevels[view.level] / (north - south);
+    return {
+      scaleX, scaleY,
+      px: x => width / 2 + (x - view.x) * scaleX,
+      py: y => height / 2 - (y - view.y) * scaleY,
+    };
+  }
+
+  function constrainView() {
+    const halfWidth = (east - west) / (2 * zoomLevels[view.level]);
+    const halfHeight = (north - south) / (2 * zoomLevels[view.level]);
+    view.x = Math.max(west + halfWidth, Math.min(east - halfWidth, view.x));
+    view.y = Math.max(south + halfHeight, Math.min(north - halfHeight, view.y));
+  }
+
+  function setZoom(level) {
+    if (level < 0 || level >= zoomLevels.length || level === view.level) return;
+    if (level > view.level && selection) {
+      const [x, y] = selection.kind === 'device'
+        ? [data.devices[selection.index].x, data.devices[selection.index].y]
+        : gridCenter(selection.index);
+      const { width, height } = plot.getBoundingClientRect();
+      const { px, py } = projection(width, height);
+      if (px(x) >= 0 && px(x) <= width && py(y) >= 0 && py(y) <= height) {
+        view.x = x;
+        view.y = y;
+      }
+    }
+    view.level = level;
+    constrainView();
+    zoomOut.disabled = level === 0;
+    zoomReset.disabled = level === 0;
+    zoomIn.disabled = level === zoomLevels.length - 1;
+    zoomReset.textContent = `${zoomLevels[level] * 100}%`;
+    plot.dataset.zoomed = String(level > 0);
+    drawMap();
+  }
+
+  function cellKind(x, y) {
+    return heatContext.isPointInPath(buildings, x, y) ? 'building' : 'cell';
+  }
+
+  const markers = data.devices.map((device, index) => {
+    const button = document.createElement('button');
+    const label = document.createElement('span');
+    button.type = 'button';
+    button.className = 'marker';
+    button.setAttribute('aria-pressed', 'false');
+    label.textContent = device.id;
+    button.append(label);
+    button.addEventListener('click', () => select('device', index, true));
+    plot.append(button);
+    return button;
+  });
+
+  function select(kind, index, reveal = false) {
+    const opening = insights.hidden;
+    selection = { kind, index };
+    if (kind === 'device' && selector.value === 'hourly') hourlyPanel.selectPoint(data.devices[index].id);
+    showReading();
+    drawMap();
+    if (reveal && opening && !insights.hidden && insights.getBoundingClientRect().top > window.innerHeight - 90) {
+      insights.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+    }
+  }
+
+  function showReading() {
+    const detail = byId('map-reading');
+    insights.hidden = true;
+    markers.forEach((marker, index) => {
+      marker.setAttribute('aria-pressed', String(selection?.kind === 'device' && selection.index === index));
+    });
+    if (!selection) {
+      detail.textContent = '点设备或网格查看数值。';
+      return;
+    }
+    const { kind, index } = selection;
+    const hourly = selector.value === 'hourly';
+    const unit = hourly ? '只/条' : '只/台';
+    if (kind === 'device') {
+      const device = data.devices[index];
+      const value = counts[index];
+      const area = device.area ? ` · ${device.area}` : '';
+      const source = hourly ? '小时最大值' : '演示读数';
+      detail.textContent = `${device.id}号设备${area} · ${value === null ? '缺测' : `${source} ${value} ${hourly ? unit : '只'}`}`;
+      if (!hourly) showInsights(index, kind);
+      return;
+    }
+    if (kind === 'building') {
+      detail.textContent = `${gridId(index)} · 建筑范围`;
+      return;
+    }
+    if (!hourly) showInsights(index);
+    const { sources, estimate } = gridReadings[index];
+    if (sources.length === 0) {
+      detail.textContent = `${gridId(index)} · 暂无监测资料`;
+    } else if (sources.length === 1) {
+      detail.textContent = `${gridId(index)} · 单点衰减 ${estimate.toFixed(1)} ${unit} · 参考 ${data.devices[sources[0].index].id}号设备`;
+    } else {
+      detail.textContent = `${gridId(index)} · ${sources.length} 台支持 · 演示估算 ${estimate.toFixed(1)} ${unit}`;
+    }
+  }
+
+  function drawMap() {
+    const { width, height } = plot.getBoundingClientRect();
+    if (width === 0 || height === 0) return;
+    const ratio = window.devicePixelRatio || 1;
+    const bitmapWidth = Math.round(width * ratio);
+    const bitmapHeight = Math.round(height * ratio);
+    if (canvas.width !== bitmapWidth) canvas.width = bitmapWidth;
+    if (canvas.height !== bitmapHeight) canvas.height = bitmapHeight;
+    const context = canvas.getContext('2d');
+    context.setTransform(bitmapWidth / width, 0, 0, bitmapHeight / height, 0, 0);
+    context.clearRect(0, 0, width, height);
+
+    const { px, py, scaleX, scaleY } = projection(width, height);
+    if (baseMap.complete && baseMap.naturalWidth) {
+      context.drawImage(baseMap, px(west), py(north), scaleX * (east - west), scaleY * (north - south));
+    }
+    markers.forEach((marker, index) => {
+      const x = px(data.devices[index].x);
+      const y = py(data.devices[index].y);
+      marker.style.setProperty('--x', `${x}px`);
+      marker.style.setProperty('--y', `${y}px`);
+      marker.hidden = x < 0 || y < 0 || x > width || y > height;
+    });
+    function cellRectangle(index) {
+      const x = (index % data.columns) * cellSize;
+      const y = Math.floor(index / data.columns) * cellSize;
+      return [px(x), py(y + cellSize), px(Math.min(x + cellSize, data.maxX)) - px(x), py(y) - py(y + cellSize)];
+    }
+
+    context.save();
+    context.beginPath();
+    context.rect(px(0), py(data.maxY), px(data.maxX) - px(0), py(0) - py(data.maxY));
+    context.clip();
+    const outdoors = new Path2D();
+    outdoors.rect(px(0), py(data.maxY), px(data.maxX) - px(0), py(0) - py(data.maxY));
+    outdoors.addPath(buildings, new DOMMatrix([scaleX, 0, 0, -scaleY, px(0), py(0)]));
+    context.clip(outdoors, 'evenodd');
+
+    context.drawImage(heatTransition ? flipLayer : heatLayer, px(0), py(data.maxY),
+      px(data.maxX) - px(0), py(0) - py(data.maxY));
+
+    const circleRadius = px(radius) - px(0);
+    context.strokeStyle = 'rgba(130, 105, 64, .52)';
+    context.lineWidth = 1;
+    context.setLineDash([3, 4]);
+    data.devices.forEach((device, index) => {
+      if (counts[index] === null) return;
+      const x = px(device.x);
+      const y = py(device.y);
+      const shade = context.createRadialGradient(x, y, 0, x, y, circleRadius);
+      shade.addColorStop(0, 'rgba(255, 242, 204, .04)');
+      shade.addColorStop(1, 'rgba(255, 242, 204, 0)');
+      context.beginPath();
+      context.arc(x, y, circleRadius, 0, Math.PI * 2);
+      context.fillStyle = shade;
+      context.fill();
+      context.stroke();
+    });
+    context.restore();
+
+    if (showGrid) {
+      context.strokeStyle = '#496e6270';
+      context.lineWidth = 0.65;
+      context.beginPath();
+      for (let col = 0; col < data.columns; col++) {
+        context.moveTo(px(col * cellSize), py(0));
+        context.lineTo(px(col * cellSize), py(data.maxY));
+      }
+      context.moveTo(px(data.maxX), py(0));
+      context.lineTo(px(data.maxX), py(data.maxY));
+      for (let row = 0; row <= data.rows; row++) {
+        context.moveTo(px(0), py(row * cellSize));
+        context.lineTo(px(data.maxX), py(row * cellSize));
+      }
+      context.stroke();
+    }
+    if (selection && selection.kind !== 'device') {
+      const rect = cellRectangle(selection.index);
+      context.strokeStyle = '#fffdf6';
+      context.lineWidth = 3.5;
+      context.strokeRect(...rect);
+      context.strokeStyle = '#174e4c';
+      context.lineWidth = 1.5;
+      context.strokeRect(...rect);
+    }
+  }
+
+  canvas.addEventListener('click', event => {
+    if (ignoreMapClick) {
+      ignoreMapClick = false;
+      return;
+    }
+    const bounds = canvas.getBoundingClientRect();
+    const { scaleX, scaleY } = projection(bounds.width, bounds.height);
+    const x = view.x + (event.clientX - bounds.left - bounds.width / 2) / scaleX;
+    const y = view.y - (event.clientY - bounds.top - bounds.height / 2) / scaleY;
+    if (x < 0 || y < 0 || x >= data.maxX || y >= data.maxY) return;
+    select(cellKind(x, y), Math.floor(y / cellSize) * data.columns + Math.floor(x / cellSize), true);
+  });
+
+  canvas.addEventListener('pointerdown', event => {
+    if (!event.isPrimary || event.button !== 0) return;
+    ignoreMapClick = false;
+    if (view.level === 0) return;
+    const { width, height } = canvas.getBoundingClientRect();
+    const { scaleX, scaleY } = projection(width, height);
+    drag = { id: event.pointerId, startX: event.clientX, startY: event.clientY, x: view.x, y: view.y, scaleX, scaleY, moved: false };
+    canvas.setPointerCapture(event.pointerId);
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (drag?.id !== event.pointerId) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(dx, dy) < 5) return;
+    drag.moved = true;
+    canvas.classList.add('dragging');
+    view.x = drag.x - dx / drag.scaleX;
+    view.y = drag.y + dy / drag.scaleY;
+    constrainView();
+    drawMap();
+  });
+  function finishDrag(event) {
+    if (drag?.id !== event.pointerId) return;
+    ignoreMapClick = drag.moved;
+    drag = null;
+    canvas.classList.remove('dragging');
+  }
+  canvas.addEventListener('pointerup', finishDrag);
+  canvas.addEventListener('pointercancel', finishDrag);
+  canvas.addEventListener('lostpointercapture', finishDrag);
+
+  canvas.addEventListener('keydown', event => {
+    const directions = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] };
+    const move = directions[event.key];
+    if (!move) return;
+    event.preventDefault();
+    const index = selection && selection.kind !== 'device' ? selection.index : Math.floor(data.rows / 2) * data.columns + Math.floor(data.columns / 2);
+    const col = Math.max(0, Math.min(data.columns - 1, index % data.columns + move[0]));
+    const row = Math.max(0, Math.min(data.rows - 1, Math.floor(index / data.columns) + move[1]));
+    const next = row * data.columns + col;
+    const [x, y] = gridCenter(next);
+    const { width, height } = canvas.getBoundingClientRect();
+    const { px, py } = projection(width, height);
+    if (px(x) < 0 || py(y) < 0 || px(x) > width || py(y) > height) {
+      view.x = x;
+      view.y = y;
+      constrainView();
+    }
+    select(cellKind(x, y), next);
+  });
+
+  function renderScenario(animate = false) {
+    const scenario = scenarios[selector.value];
+    const hourly = selector.value === 'hourly';
+    const unit = hourly ? '只/条' : '只/台';
+    const beforeCounts = counts;
+    const beforeImage = heatImage;
+    const report = byId('report');
+    report.dataset.tone = scenario.tone;
+    byId('risk-grade').textContent = scenario.grade;
+    byId('report-title').textContent = scenario.title;
+    byId('report-tip').textContent = scenario.tip;
+    counts = data.devices.map(device => hourly ? (hourlyReadings.get(device.id) ?? null)
+      : device.id === scenario.missing ? null : device.count);
+    const readings = counts.filter(Number.isFinite);
+    gridReadings = estimateGrid(counts);
+    heatImage = renderHeatImage(gridReadings);
+    paintHeatImage(heatLayer, heatImage);
+    byId('average').textContent = readings.length ? number.format(readings.reduce((sum, value) => sum + value, 0) / readings.length) : '—';
+    byId('average-unit').textContent = readings.length ? unit : '无数据';
+    byId('average').closest('.metric').querySelector('dt').textContent = hourly ? '各点小时最大值的均值' : '每设备平均捕获';
+    byId('map-title').textContent = hourly ? '2 米网格 · 模拟空间估算' : '2 米网格估算';
+    byId('heat-scale').setAttribute('aria-label', `连续估算色带，单位为${unit}`);
+    note.textContent = `色带单位为${unit}。淡圈为 ${radius} 米参考范围，单点估算每远 ${data.singleDecayDistanceM} 米减 1 只。`;
+    byId('period-summary').hidden = hourly;
+    replay.hidden = hourly || reducedMotion.matches;
+    byId('risk-count').textContent = scenario.riskCount ?? '—';
+    byId('risk-count').dataset.tone = scenario.tone;
+    byId('risk-unit').textContent = scenario.riskCount === null ? '待评估' : '处';
+    byId('sample-summary').textContent = `${readings.length} / ${counts.length} 台有数据`;
+    byId('risk-area').hidden = scenario.tone !== 'high';
+    markers.forEach((marker, index) => {
+      const missing = counts[index] === null;
+      marker.dataset.missing = String(missing);
+      const device = data.devices[index];
+      const pointLabel = device.id === 3 ? '，模拟坐标' : '';
+      marker.setAttribute('aria-label', `${device.id}号设备${pointLabel}，${missing ? '缺测' : `${hourly ? '小时最大值' : '演示读数'} ${counts[index]} 只`}`);
+    });
+    if (hourly) {
+      cancelAnimationFrame(heatFrame);
+      heatTransition = null;
+    } else if (animate) {
+      report.classList.remove('report-update');
+      void report.offsetWidth;
+      report.classList.add('report-update');
+      startHeatUpdate(beforeCounts.length ? beforeCounts : previousDayCounts(), beforeImage);
+    }
+    showReading();
+    drawMap();
+  }
+
+  byId('map-switch').addEventListener('click', event => {
+    showGrid = !showGrid;
+    event.currentTarget.setAttribute('aria-pressed', String(showGrid));
+    event.currentTarget.textContent = showGrid ? '隐藏格线' : '显示格线';
+    drawMap();
+  });
+  zoomIn.addEventListener('click', () => setZoom(view.level + 1));
+  zoomOut.addEventListener('click', () => setZoom(view.level - 1));
+  zoomReset.addEventListener('click', () => setZoom(0));
+  opacitySlider.addEventListener('input', () => {
+    const text = `${opacitySlider.value}%`;
+    byId('heat-opacity-value').textContent = text;
+    opacitySlider.setAttribute('aria-valuetext', text);
+    paintHeatImage(heatLayer, heatImage);
+    if (heatTransition) paintHeatImage(previousHeatLayer, heatTransition.image);
+    drawMap();
+  });
+  replay.hidden = reducedMotion.matches;
+  replay.addEventListener('click', () => startHeatUpdate(previousDayCounts()));
+  reducedMotion.addEventListener('change', () => {
+    replay.hidden = selector.value === 'hourly' || reducedMotion.matches;
+    if (!reducedMotion.matches || !heatTransition) return;
+    cancelAnimationFrame(heatFrame);
+    heatTransition = null;
+    drawMap();
+  });
+  const hourlyPanel = globalThis.initDemoHourly({
+    points: data.devices,
+    applyReadings(readings) {
+      hourlyReadings = readings;
+      if (selector.value === 'hourly') renderScenario();
+    },
+    locatePoint(id, reveal = false) {
+      const index = data.devices.findIndex(device => device.id === id);
+      if (index < 0) return;
+      select('device', index);
+      if (reveal) {
+        plot.scrollIntoView({ block: 'nearest' });
+        markers[index].focus({ preventScroll: true });
+      }
+    },
+  });
+  function switchScenario() {
+    const hourly = selector.value === 'hourly';
+    if (hourly) {
+      const point = selection?.kind === 'device' ? data.devices[selection.index].id : hourlyPanel.point();
+      selection = { kind: 'device', index: data.devices.findIndex(device => device.id === point) };
+      hourlyPanel.selectPoint(point);
+    }
+    hourlyPanel.setActive(hourly);
+    renderScenario(!hourly);
+  }
+  selector.addEventListener('change', switchScenario);
+  new ResizeObserver(drawMap).observe(plot);
+  new ResizeObserver(drawTrend).observe(trendCanvas);
+  baseMap.onload = drawMap;
+  baseMap.onerror = () => { note.textContent = 'CAD 底图未加载。请确认图片与网页位于同一目录。'; };
+  baseMap.src = './住区CAD底图.png';
+  const params = new URLSearchParams(location.search);
+  const requestedDevice = params.get('device');
+  const deviceIndex = data.devices.findIndex(device => String(device.id) === requestedDevice);
+  if (deviceIndex >= 0) {
+    selection = { kind: 'device', index: deviceIndex };
+    byId('overview-link').hidden = false;
+  }
+  if (params.get('hourly') === '1' || location.hash === '#hourly-panel') selector.value = 'hourly';
+  switchScenario();
+  if (deviceIndex >= 0 && location.hash === '#grid-insights' && !insights.hidden) {
+    requestAnimationFrame(() => insights.scrollIntoView({ block: 'start' }));
+  }
+})();
+  </script>
+</body>
+</html>

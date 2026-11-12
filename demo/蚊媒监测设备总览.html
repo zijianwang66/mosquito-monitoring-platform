@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f6ee">
+  <title>灭蚊设备总览 · 珠江未来小屋</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; line-height: 1.5; background-color: #fcfcfc; color: #1a1a1a; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3 { margin-top: 0; font-weight: 600; line-height: 1.2; }
+    img { max-width: 100%; height: auto; display: block; }
+    button, input { font: inherit; }
+
+    :root {
+      color-scheme: light;
+      --paper: #f8f6ee;
+      --ink: #20372e;
+      --muted: #53685c;
+      --green: #2b654e;
+      --line: #d6ded0;
+      --warning: #794826;
+      --blue: #285368;
+    }
+    body { background: #e7ece2; color: var(--ink); font-family: "Microsoft YaHei UI", "PingFang SC", system-ui, sans-serif; }
+    ::selection { background: #c6dec9; color: var(--ink); }
+    :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+    p, figure, dl, dd { margin: 0; }
+    a { color: var(--green); text-underline-offset: 3px; }
+    button { color: inherit; cursor: pointer; }
+    button:disabled { cursor: default; }
+    [hidden] { display: none !important; }
+
+    main {
+      width: min(100%, 520px);
+      min-height: 100svh;
+      margin-inline: auto;
+      padding: 15px clamp(12px, 4vw, 22px) max(19px, env(safe-area-inset-bottom));
+      background: var(--paper);
+    }
+    .heading, .section-head, .device-head, .map-legend, .device-facts, .device-actions {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .heading { margin-bottom: 10px; }
+    h1 { margin: 0 0 3px; font-size: clamp(22px, 6.3vw, 31px); font-weight: 750; letter-spacing: -.035em; }
+    .site-name, .period, .demo, .section-meta { font-size: 11px; color: var(--muted); }
+    .period { text-align: right; white-space: nowrap; }
+    .period time { font-variant-numeric: tabular-nums; }
+    .demo { color: #466450; font-weight: 700; }
+
+    .alert {
+      width: 100%; min-height: 43px; display: flex; align-items: center; gap: 7px;
+      padding: 7px 9px; text-align: left; border: 1px solid #e1ceab; border-radius: 8px;
+      color: var(--warning); background: #f4ead7; font-size: 12px;
+    }
+    .alert strong { font-size: 11px; }
+    .alert time { margin-left: auto; font-size: 11px; color: #725838; }
+    .locate { font-size: 11px; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
+    .metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-block: 8px 10px; }
+    .metric { min-width: 0; padding: 6px 8px 7px; background: #e8efe2; border: 1px solid #d7e1d3; border-radius: 8px; }
+    .metric dt { font-size: 11px; color: var(--muted); white-space: nowrap; }
+    .metric dd { line-height: 1.2; font-size: 11px; color: var(--muted); }
+    .metric strong { margin-right: 3px; color: var(--ink); font: 650 25px/1.1 "Bahnschrift", "Segoe UI", sans-serif; font-variant-numeric: tabular-nums; }
+
+    .site-map { border: 1px solid #cbd7c8; border-radius: 13px; overflow: hidden; background: #fcfbf5; scroll-margin-top: 8px; }
+    .section-head { padding: 2px 9px; }
+    h2 { margin: 0; font-size: 14px; font-weight: 720; }
+    .map-tools { display: flex; align-items: center; gap: 4px; }
+    .map-tools button {
+      min-height: 36px; padding: 0 6px; border: 0; border-radius: 5px; background: transparent;
+      font-size: 11px; color: var(--green); white-space: nowrap;
+    }
+    .map-tools button[aria-pressed="true"] { background: #e5eee1; font-weight: 700; }
+    .scene { position: relative; aspect-ratio: 1.40; margin: 0 6px; overflow: hidden; border-radius: 7px; background: #eaf0e5; }
+    .scene canvas { display: block; width: 100%; height: 100%; }
+    .device-pin {
+      position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%);
+      width: 44px; height: 36px; padding: 0; background: transparent; border: 0;
+    }
+    .pin-dot {
+      position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; transform: translate(-50%, -50%);
+      border: 1.5px solid #fffdf5; border-radius: 50%; background: var(--blue);
+    }
+    .pin-text {
+      position: absolute; left: 50%; bottom: 25px; transform: translateX(-50%); padding: 2px 4px;
+      background: #fffdf5; color: #20495b; border: 1px solid #a8bfbc; border-radius: 4px;
+      font-size: 10px; line-height: 1.25; white-space: nowrap; font-variant-numeric: tabular-nums;
+    }
+    .device-pin[aria-pressed="true"] { z-index: 1; }
+    .device-pin[aria-pressed="true"] .pin-text { background: #285368; border-color: #285368; color: #fff; font-weight: 700; }
+    .device-pin[aria-pressed="true"] .pin-dot { outline: 1.5px solid #285368; outline-offset: 1px; }
+    .device-pin[data-offline="true"] .pin-dot { background: #a34d39; }
+    .device-pin[data-offline="true"] .pin-text { color: #823b2a; border-color: #d6a996; }
+    .device-pin[data-offline="true"][aria-pressed="true"] .pin-text { color: #fff; background: #87412e; border-color: #87412e; }
+    .map-legend { padding: 5px 9px; color: var(--muted); font-size: 10px; flex-wrap: wrap; gap: 3px 8px; }
+    .map-legend span { white-space: nowrap; }
+    .range-key::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 4px; border: 1px dashed #5d8069; border-radius: 50%; vertical-align: -1px; }
+
+    .device { margin-top: 8px; padding: 8px 10px; background: #edf2e8; border: 1px solid #d2dfce; border-radius: 11px; scroll-margin-top: 8px; }
+    .point-nav {
+      display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px;
+      border-bottom: 1px solid #d1dece; margin-bottom: 9px;
+    }
+    .point-nav button {
+      min-height: 39px; padding: 0; border: 0; border-bottom: 2px solid transparent;
+      background: transparent; color: var(--muted); font-size: 12px; white-space: nowrap;
+    }
+    .point-nav button[aria-pressed="true"] {
+      border-bottom-color: var(--green); color: var(--ink); font-size: 16px; font-weight: 750;
+    }
+    .point-nav button:hover { background: #e4ece0; }
+    .point-nav button:focus-visible { outline-offset: -3px; }
+    .device-head { flex-wrap: wrap; gap: 4px 8px; }
+    .device-head h2 { font-size: 16px; }
+    .connection { font-size: 11px; font-weight: 700; color: var(--green); }
+    .connection[data-offline="true"] { color: #8d402d; }
+    .device-facts { margin-top: 3px; flex-wrap: wrap; gap: 3px 8px; font-size: 11px; color: var(--muted); }
+    .device-facts strong { color: var(--ink); }
+    .capture-trend {
+      margin-top: 8px; padding: 8px 0 6px; border-block: 1px solid #d7e2d2;
+      touch-action: pan-y pinch-zoom; user-select: none;
+    }
+    .capture-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 3px 8px; }
+    .capture-heading h3 { margin: 0; font-size: 13px; font-weight: 700; }
+    .capture-heading span, .capture-note { color: var(--muted); font-size: 11px; }
+    .capture-note { margin-top: 3px; }
+    .chart { position: relative; margin-top: 15px; padding-left: 20px; }
+    .chart-guides {
+      position: absolute; inset: 0 0 20px; display: flex; flex-direction: column;
+      justify-content: space-between; pointer-events: none;
+    }
+    .chart-guide { display: flex; align-items: center; height: 0; }
+    .chart-guide::after { content: ""; flex: 1; height: 1px; background: #d5e1d3; }
+    .chart-guide:last-child::after { background: #b8cbb9; }
+    .chart-guide span {
+      width: 20px; padding-right: 5px; color: var(--muted); text-align: right; font-size: 10px;
+      line-height: 1; font-variant-numeric: tabular-nums;
+    }
+    .chart-bars {
+      display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+      position: relative; margin: 0; padding: 0; list-style: none;
+    }
+    .chart-column { text-align: center; font-variant-numeric: tabular-nums; }
+    .bar-track { position: relative; height: 104px; }
+    .bar-fill {
+      position: absolute; bottom: 0; left: 50%; width: clamp(12px, 53%, 28px);
+      height: var(--fill); translate: -50% 0; border-radius: 3px 3px 0 0; background: #84a996;
+    }
+    .bar-number {
+      position: absolute; bottom: calc(var(--fill) + 2px); left: 0; right: 0;
+      color: var(--ink); font-size: 11px; font-weight: 650; line-height: 1;
+    }
+    .bar-date { display: block; height: 20px; line-height: 20px; color: var(--muted); font-size: 10px; }
+    .chart-column:last-child .bar-fill { background: var(--green); }
+    .chart-column:last-child .bar-date { color: var(--ink); font-weight: 700; }
+    @media (prefers-reduced-motion: no-preference) {
+      .bar-fill { transition: height 160ms ease-out; }
+      .bar-number { transition: bottom 160ms ease-out; }
+    }
+    .device-actions { margin-top: 7px; }
+    .device-actions strong { display: block; font-size: 12px; }
+    .control-note { min-height: 16px; color: var(--muted); font-size: 10px; }
+    .power {
+      min-height: 39px; flex: none; padding: 5px 10px; border: 1px solid #245644; border-radius: 7px;
+      background: #2a5e49; color: #fff; font-size: 12px; font-weight: 650;
+    }
+    .power:disabled { background: #dce5d9; color: #526454; border-color: #c9d6c7; }
+    .detail-link { display: inline-flex; align-items: center; min-height: 32px; font-size: 11px; }
+
+    .operations {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line);
+    }
+    .queue:first-child { padding-right: 8px; }
+    .queue + .queue { padding-left: 8px; border-left: 1px solid var(--line); }
+    .queue .section-head { display: grid; justify-content: start; gap: 2px; padding: 0 0 4px; }
+    .queue-list { list-style: none; padding: 0; margin: 0; }
+    .queue-list li + li { border-top: 1px solid var(--line); }
+    .queue-list button {
+      width: 100%; min-height: 44px; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+      align-items: start; gap: 5px;
+      border: 0; background: transparent; padding: 5px 0; text-align: left; font-size: 12px;
+    }
+    .queue-list button:hover strong { text-decoration: underline; text-underline-offset: 3px; }
+    .queue-list strong { overflow-wrap: anywhere; }
+    .queue-list small { display: block; color: var(--muted); }
+    .queue-status { font-size: 11px; color: var(--green); white-space: nowrap; }
+    .queue-status.attention { color: var(--warning); }
+    .load-error { font-size: 12px; color: #8d402d; }
+
+    @media (max-width: 440px) {
+      .device-pin[data-device-id="1"] .pin-text { transform: translateX(calc(-50% + 8px)); }
+      .device-pin[data-device-id="2"] .pin-text { transform: translateX(calc(-50% - 8px)); }
+    }
+
+    @media (min-width: 560px) {
+      body { padding-block: 16px; }
+      main { min-height: auto; border-radius: 16px; border: 1px solid #d2dbce; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="heading">
+      <div><h1>灭蚊设备总览</h1><p class="site-name">珠江未来小屋 · 近 24 小时</p></div>
+      <div class="period"><p class="demo">演示环境</p><p>更新于 <time id="update-time"></time></p></div>
+    </header>
+
+    <button type="button" id="risk-alert" class="alert" aria-label="风险预警，花园区待核查，定位 7 号设备">
+      <strong>风险预警</strong><span>花园区 · 待核查</span><time id="risk-time"></time><span class="locate">定位</span>
+    </button>
+
+    <dl class="metrics" aria-label="监测汇总">
+      <div class="metric"><dt>捕获总数</dt><dd><strong id="capture-total">—</strong>只</dd></div>
+      <div class="metric"><dt>设备在线</dt><dd><strong id="online-total">—</strong><span id="device-total"></span></dd></div>
+      <div class="metric"><dt>待处理任务</dt><dd><strong id="pending-total">—</strong>项</dd></div>
+    </dl>
+
+    <figure class="site-map" id="site-map" aria-labelledby="map-title">
+      <div class="section-head">
+        <h2 id="map-title">BIM 与设备布点</h2>
+        <div class="map-tools" role="group" aria-label="底图和覆盖范围">
+          <button type="button" id="view-bim" aria-pressed="true">BIM</button>
+          <button type="button" id="view-plan" aria-pressed="false">平面</button>
+          <button type="button" id="show-coverage" aria-pressed="true">覆盖范围</button>
+        </div>
+      </div>
+      <div class="scene" id="scene"><canvas id="scene-drawing" aria-hidden="true"></canvas></div>
+      <figcaption class="map-legend"><span id="map-source">CAD 轮廓立体示意</span><span class="range-key" id="range-legend"></span></figcaption>
+    </figure>
+    <p class="load-error" id="load-error" role="status" hidden></p>
+
+    <section class="device" id="device" aria-labelledby="device-title">
+      <div class="point-nav" id="point-nav" role="group" aria-label="监测点位"></div>
+      <div class="device-head"><h2 id="device-title">设备详情</h2><span class="connection" id="connection"></span></div>
+      <div class="device-facts"><span>捕获 <strong id="selected-catch"></strong> 只</span><span>最后上报 <time id="last-report"></time></span></div>
+      <figure class="capture-trend" id="capture-trend" aria-labelledby="capture-title" aria-describedby="capture-period">
+        <figcaption>
+          <div class="capture-heading"><h3 id="capture-title">近 7 天蚊媒捕获（只）</h3><span>左右滑动切换点位</span></div>
+          <p class="capture-note" id="capture-period"></p>
+        </figcaption>
+        <div class="chart">
+          <div class="chart-guides" id="chart-guides" aria-hidden="true"></div>
+          <ol class="chart-bars" id="chart-bars" role="list" aria-label="每日捕获数量"></ol>
+        </div>
+      </figure>
+      <div class="device-actions">
+        <div><strong id="run-state"></strong><p class="control-note" id="control-note" role="status"></p></div>
+        <button class="power" type="button" id="power" disabled></button>
+      </div>
+      <a class="detail-link" id="details-link" href="./蚊媒监测驾驶舱.html">查看雌蚊、雄蚊与飞蚁明细</a>
+    </section>
+
+    <div class="operations">
+      <section class="queue" id="faults" aria-labelledby="fault-title">
+        <div class="section-head"><h2 id="fault-title">设备问题</h2><span class="section-meta" id="fault-count"></span></div>
+        <ul class="queue-list" id="fault-list"></ul>
+      </section>
+      <section class="queue" aria-labelledby="task-title">
+        <div class="section-head"><h2 id="task-title">任务概况</h2><span class="section-meta" id="task-count"></span></div>
+        <ul class="queue-list" id="task-list"></ul>
+      </section>
+    </div>
+  </main>
+
+  <script src="./住区2米网格数据.js"></script>
+  <script src="./蚊媒数据入库/demo-point-layout.js"></script>
+  <script>
+  (() => {
+    const byId = id => document.getElementById(id);
+    const data = globalThis.demoSiteGridData;
+    const error = byId('load-error');
+    if (!data) {
+      error.hidden = false;
+      error.textContent = '点位数据未加载。请将首页与配套文件放在同一目录。';
+      return;
+    }
+    const sampleOffline = 4;
+    const tasks = [
+      { device: 4, title: '排查通信中断', status: '待处理' },
+      { device: 2, title: '清洁捕获盒', status: '待处理' },
+      { device: 5, title: '例行巡检', status: '处理中' },
+    ];
+    const end = Date.parse(data.periodEnd);
+    const formatter = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hour12: false });
+    const atMinutesBefore = minutes => end - minutes * 60000;
+    const sampleTimes = new Map([[1, 1], [2, 2], [4, 87], [5, 3], [6, 1], [7, 0]]);
+    const fault = { device: sampleOffline, title: '通信中断', when: atMinutesBefore(74) };
+    const devices = new Map(data.devices.map(point => [point.id, {
+      point, online: point.count !== null && point.id !== sampleOffline, running: point.id !== 2 && point.id !== sampleOffline,
+      lastReport: atMinutesBefore(sampleTimes.get(point.id) ?? 0), pending: false, feedback: '',
+    }]));
+    const pointIds = [...devices.keys()];
+    let selected = 7;
+    let mode = 'bim';
+    let coverage = true;
+
+    const scene = byId('scene');
+    const canvas = byId('scene-drawing');
+    const ground = new Image();
+    const outlineHeight = [3.8, 3.0, 3.3];
+    const [west, south, east, north] = data.bounds;
+    const siteCorners = [[west, north], [east, north], [east, south], [west, south]];
+    const projectMode = {
+      bim: { ex: .96, nx: .24, ey: .12, ny: -.64, elevation: .8 },
+      plan: { ex: 1, nx: 0, ey: 0, ny: -1, elevation: 0 },
+    };
+
+    function setTime(element, value) {
+      element.dateTime = new Date(value).toISOString();
+      element.textContent = formatter.format(value);
+    }
+    setTime(byId('update-time'), end);
+    setTime(byId('risk-time'), atMinutesBefore(12));
+    byId('capture-total').textContent = data.devices.reduce((sum, point) => sum + point.count, 0);
+    byId('online-total').textContent = [...devices.values()].filter(device => device.online).length;
+    byId('device-total').textContent = ` / ${devices.size} 台`;
+    const pendingCount = tasks.filter(task => task.status === '待处理').length;
+    byId('pending-total').textContent = pendingCount;
+    byId('fault-count').textContent = '1 台故障';
+    byId('task-count').textContent = `${pendingCount} 待处理 · ${tasks.length - pendingCount} 处理中`;
+    byId('range-legend').textContent = `${data.referenceRadiusM} 米参考范围`;
+
+    const pointNav = byId('point-nav');
+    const pointButtons = new Map(data.devices.map(point => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.deviceId = String(point.id);
+      button.setAttribute('aria-label', `${point.id}号点位${point.area ? `，${point.area}` : ''}`);
+      button.setAttribute('aria-controls', 'capture-trend');
+      button.textContent = `${point.id}号`;
+      button.addEventListener('click', () => selectDevice(point.id));
+      pointNav.append(button);
+      return [point.id, button];
+    }));
+
+    const trend = byId('capture-trend');
+    const dateFormatter = new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', month: '2-digit', day: '2-digit' });
+    const dates = Array.from({ length: 7 }, (_, day) => dateFormatter.format(atMinutesBefore((6 - day) * 1440)));
+    const histories = new Map(data.devices.map(({ id, sampleCaptures = [] }) => [
+      id, dates.map((_, day) => {
+        const reading = sampleCaptures[sampleCaptures.length - dates.length + day];
+        if (!Number.isFinite(reading?.[0]) || !Number.isFinite(reading?.[1])) return null;
+        return reading[0] + reading[1];
+      }),
+    ]));
+    const peak = Math.max(0, ...[...histories.values()].flat());
+    const tickStep = Math.max(1, Math.ceil(peak / 15)) * 5;
+    const scaleMax = 3 * tickStep;
+    byId('capture-period').textContent = `每日 ${formatter.format(end)} 截止 · 每柱 24 小时 · 演示`;
+    for (const level of [3, 2, 1, 0]) {
+      const guide = document.createElement('div');
+      guide.className = 'chart-guide';
+      const tick = document.createElement('span');
+      tick.textContent = level * tickStep;
+      guide.append(tick);
+      byId('chart-guides').append(guide);
+    }
+    const columns = dates.map(date => {
+      const column = document.createElement('li');
+      column.className = 'chart-column';
+      const track = document.createElement('div');
+      track.className = 'bar-track';
+      const fill = document.createElement('span');
+      fill.className = 'bar-fill';
+      const number = document.createElement('span');
+      number.className = 'bar-number';
+      track.append(fill, number);
+      const label = document.createElement('span');
+      label.className = 'bar-date';
+      label.textContent = date;
+      column.append(track, label);
+      byId('chart-bars').append(column);
+      return { column, number };
+    });
+
+    function renderTrend() {
+      for (const [id, button] of pointButtons) button.setAttribute('aria-pressed', String(id === selected));
+      const values = histories.get(selected);
+      columns.forEach(({ column, number }, day) => {
+        const value = values[day];
+        column.style.setProperty('--fill', `${(value ?? 0) / scaleMax * 100}%`);
+        column.setAttribute('aria-label', `${dates[day]}，${value === null ? '无数据' : `${value} 只`}`);
+        number.textContent = value ?? '—';
+      });
+    }
+
+    function movePoint(direction, from = selected) {
+      const next = pointIds[pointIds.indexOf(from) + direction];
+      if (next === undefined) return;
+      selectDevice(next);
+      return pointButtons.get(next);
+    }
+
+    pointNav.addEventListener('keydown', event => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      movePoint(event.key === 'ArrowLeft' ? -1 : 1, Number(event.target.dataset.deviceId))?.focus();
+    });
+    let swipeStart = null;
+    trend.addEventListener('pointerdown', event => {
+      if (!event.isPrimary || event.button !== 0) return;
+      swipeStart = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      trend.setPointerCapture(event.pointerId);
+    });
+    trend.addEventListener('pointerup', event => {
+      if (swipeStart?.id !== event.pointerId) return;
+      const dx = event.clientX - swipeStart.x;
+      const dy = event.clientY - swipeStart.y;
+      swipeStart = null;
+      if (Math.abs(dx) >= 38 && Math.abs(dx) > 1.25 * Math.abs(dy)) movePoint(dx < 0 ? 1 : -1);
+    });
+    trend.addEventListener('lostpointercapture', event => {
+      if (swipeStart?.id === event.pointerId) swipeStart = null;
+    });
+
+    const pins = new Map([...devices.values()].map(({ point, online }) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'device-pin';
+      button.dataset.deviceId = String(point.id);
+      button.dataset.offline = String(!online);
+      const reading = point.count === null ? '暂无概览读数' : `捕获 ${point.count} 只，${online ? '在线' : '离线'}`;
+      button.setAttribute('aria-label', `${point.id}号设备，${point.area || '区域未标注'}，${reading}`);
+      const label = document.createElement('span');
+      label.className = 'pin-text';
+      label.textContent = `${point.id}号 · ${point.count === null ? '—' : `${point.count}只`}`;
+      const dot = document.createElement('span');
+      dot.className = 'pin-dot';
+      button.append(label, dot);
+      button.addEventListener('click', () => selectDevice(point.id));
+      scene.append(button);
+      return [point.id, button];
+    }));
+
+    function makeQueueRow(list, device, title, subtitle, status) {
+      const item = document.createElement('li');
+      const button = document.createElement('button');
+      button.type = 'button';
+      const label = document.createElement('span');
+      const name = document.createElement('strong');
+      name.textContent = title;
+      const detail = document.createElement('small');
+      detail.textContent = subtitle;
+      label.append(name, detail);
+      const state = document.createElement('span');
+      state.className = `queue-status${status === '处理中' ? '' : ' attention'}`;
+      state.textContent = status;
+      button.append(label, state);
+      button.addEventListener('click', () => selectDevice(device, true));
+      item.append(button);
+      list.append(item);
+    }
+    makeQueueRow(byId('fault-list'), fault.device, `${fault.device}号 · ${fault.title}`, `发生于 ${formatter.format(fault.when)}`, '待恢复');
+    for (const task of tasks) {
+      makeQueueRow(byId('task-list'), task.device, task.title, `${task.device}号设备`, task.status);
+    }
+
+    function renderDevice() {
+      const device = devices.get(selected);
+      const { point } = device;
+      byId('device-title').textContent = `${point.id}号设备 · ${point.area || '区域未标注'}`;
+      const connection = byId('connection');
+      connection.textContent = point.count === null ? '模拟点位' : device.online ? '在线' : '离线 · 通信中断';
+      connection.dataset.offline = String(!device.online);
+      byId('selected-catch').textContent = point.count ?? '—';
+      const lastReport = byId('last-report');
+      if (point.count === null) {
+        lastReport.removeAttribute('datetime');
+        lastReport.textContent = '—';
+      } else {
+        setTime(lastReport, device.lastReport);
+      }
+      byId('run-state').textContent = device.online ? (device.running ? '当前已开机' : '当前已关机') : '运行状态未知';
+      byId('control-note').textContent = point.count === null ? '模拟点位的读数见小时地图' :
+        device.online ? (device.feedback || '模拟远程控制') : '设备离线，远程控制不可用';
+      const power = byId('power');
+      power.disabled = !device.online || device.pending;
+      power.textContent = device.pending ? '发送中…' : device.running ? '远程关机' : '远程开机';
+      const hourly = point.id === 3 || point.id === 7;
+      byId('details-link').href = hourly
+        ? `./蚊媒监测驾驶舱.html?device=${point.id}&hourly=1#hourly-panel`
+        : `./蚊媒监测驾驶舱.html?device=${point.id}#grid-insights`;
+      byId('details-link').textContent = hourly ? '查看小时趋势与地图' : '查看雌蚊、雄蚊与飞蚁明细';
+      for (const [id, pin] of pins) pin.setAttribute('aria-pressed', String(id === selected));
+    }
+
+    function selectDevice(id, reveal = false) {
+      if (!devices.has(id)) return;
+      selected = id;
+      renderDevice();
+      renderTrend();
+      drawMap();
+      if (reveal) {
+        byId('site-map').scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
+      }
+    }
+
+    function pathFor(outline, project, height = 0) {
+      const path = new Path2D();
+      path.moveTo(...project(...outline[0], height));
+      for (const point of outline.slice(1)) path.lineTo(...project(...point, height));
+      path.closePath();
+      return path;
+    }
+
+    function drawMap() {
+      const { width, height } = scene.getBoundingClientRect();
+      if (!width || !height) return;
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      const ctx = canvas.getContext('2d');
+      ctx.scale(canvas.width / width, canvas.height / height);
+      const { ex, nx, ey, ny, elevation } = projectMode[mode];
+      const transformed = siteCorners.map(([x, y]) => [ex * x + nx * y, ey * x + ny * y]);
+      const xs = transformed.map(point => point[0]);
+      const ys = transformed.map(point => point[1]);
+      const minX = Math.min(...xs);
+      const minY = Math.min(...ys) - 4 * elevation;
+      const spanX = Math.max(...xs) - minX;
+      const spanY = Math.max(...ys) - minY;
+      const scale = Math.min((width - 22) / spanX, (height - 24) / spanY);
+      const translateX = (width - spanX * scale) / 2 - minX * scale;
+      const translateY = (height - spanY * scale) / 2 - minY * scale;
+      const project = (x, y, z = 0) => [translateX + (ex * x + nx * y) * scale, translateY + (ey * x + ny * y - elevation * z) * scale];
+
+      const groundShape = pathFor(siteCorners, project);
+      ctx.fillStyle = '#dfe8d8';
+      ctx.fill(groundShape);
+      if (ground.complete && ground.naturalWidth) {
+        const [gx, gy] = project(west, north);
+        ctx.save();
+        ctx.clip(groundShape);
+        ctx.transform(ex * scale, ey * scale, -nx * scale, -ny * scale, gx, gy);
+        ctx.drawImage(ground, 0, 0, east - west, north - south);
+        ctx.restore();
+      }
+
+      if (coverage) {
+        ctx.save();
+        const outdoors = pathFor([[0, 0], [data.maxX, 0], [data.maxX, data.maxY], [0, data.maxY]], project);
+        ctx.clip(outdoors);
+        for (const outline of data.buildingOutlines) outdoors.addPath(pathFor(outline, project));
+        ctx.clip(outdoors, 'evenodd');
+        ctx.transform(ex * scale, ey * scale, nx * scale, ny * scale, translateX, translateY);
+        ctx.setLineDash([0.8, 0.9]);
+        for (const point of data.devices) {
+          const active = point.id === selected;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, data.referenceRadiusM, 0, 2 * Math.PI);
+          if (active) {
+            ctx.fillStyle = '#578b7833';
+            ctx.fill();
+          }
+          ctx.lineWidth = active ? .38 : .23;
+          ctx.strokeStyle = active ? '#426d5c' : '#66847178';
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      if (mode === 'bim') {
+        const order = data.buildingOutlines.map((outline, index) => ({
+          outline, height: outlineHeight[index], depth: Math.max(...outline.map(([x, y]) => project(x, y)[1])),
+        })).sort((a, b) => a.depth - b.depth);
+        for (const { outline, height: z } of order) {
+          ctx.fillStyle = '#56644c22';
+          ctx.fill(pathFor(outline.map(([x, y]) => [x + .8, y - 1.1]), project));
+          const signedArea = outline.reduce((sum, [x, y], i) => {
+            const [nx, ny] = outline[(i + 1) % outline.length];
+            return sum + x * ny - nx * y;
+          }, 0);
+          const walls = [];
+          for (let i = 0; i < outline.length; i++) {
+            const a = outline[i];
+            const b = outline[(i + 1) % outline.length];
+            const dx = b[0] - a[0];
+            const dy = b[1] - a[1];
+            if (Math.sign(signedArea) * (dy * ey - dx * ny) <= 0) continue;
+            const av = project(...a);
+            const bv = project(...b);
+            walls.push({ vertices: [av, bv, project(...b, z), project(...a, z)], depth: (av[1] + bv[1]) / 2,
+                         side: Math.abs(dx) < Math.abs(dy) });
+          }
+          for (const wall of walls.sort((a, b) => a.depth - b.depth)) {
+            const path = pathFor(wall.vertices, (x, y) => [x, y]);
+            ctx.fillStyle = wall.side ? '#b9ab92' : '#d0bea1';
+            ctx.fill(path);
+            ctx.strokeStyle = '#a19379';
+            ctx.lineWidth = .55;
+            ctx.stroke(path);
+          }
+          const roof = pathFor(outline, project, z);
+          ctx.fillStyle = '#eee4cf';
+          ctx.fill(roof);
+          ctx.strokeStyle = '#a89b81';
+          ctx.lineWidth = .75;
+          ctx.stroke(roof);
+        }
+      }
+
+      for (const point of data.devices) {
+        const [x, y] = project(point.x, point.y);
+        const pin = pins.get(point.id);
+        pin.style.setProperty('--x', `${x}px`);
+        pin.style.setProperty('--y', `${y}px`);
+      }
+    }
+
+    byId('risk-alert').addEventListener('click', () => selectDevice(7, true));
+    for (const value of ['bim', 'plan']) {
+      byId(`view-${value}`).addEventListener('click', () => {
+        if (mode === value) return;
+        mode = value;
+        byId('view-bim').setAttribute('aria-pressed', String(mode === 'bim'));
+        byId('view-plan').setAttribute('aria-pressed', String(mode === 'plan'));
+        byId('map-source').textContent = mode === 'bim' ? 'CAD 轮廓立体示意' : 'CAD 场地平面';
+        drawMap();
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          scene.animate([{ opacity: .65 }, { opacity: 1 }], { duration: 160, easing: 'ease-out' });
+        }
+      });
+    }
+    byId('show-coverage').addEventListener('click', event => {
+      coverage = !coverage;
+      event.currentTarget.setAttribute('aria-pressed', String(coverage));
+      byId('range-legend').hidden = !coverage;
+      drawMap();
+    });
+    byId('power').addEventListener('click', () => {
+      const device = devices.get(selected);
+      if (!device.online || device.pending) return;
+      const requested = !device.running;
+      device.pending = true;
+      device.feedback = '模拟指令发送中…';
+      renderDevice();
+      setTimeout(() => {
+        device.running = requested;
+        device.pending = false;
+        device.feedback = `模拟回执 · 已${requested ? '开机' : '关机'}`;
+        if (selected === device.point.id) renderDevice();
+      }, 520);
+    });
+    ground.onload = drawMap;
+    ground.onerror = () => {
+      error.hidden = false;
+      error.textContent = 'CAD 底图未加载，请确认图片与首页在同一目录。';
+    };
+    ground.src = './住区CAD底图.png';
+    new ResizeObserver(drawMap).observe(scene);
+    selectDevice(selected);
+  })();
+  </script>
+</body>
+</html>
