@@ -1,5 +1,62 @@
 # 蚊媒监测 CSV 自动入库
 
+## 九点位模拟、质量检查与网页监控
+
+下面的 Windows PowerShell 步骤从空库运行九点位演示。需要 Python 3.10+、PostgreSQL 服务端和 `psql`。先进入本 README 所在目录，并确认 PostgreSQL 的 `bin` 已加入 PATH。
+
+### 1. 创建本机演示库并应用迁移
+
+在第一个 PowerShell 窗口执行。端口 `55432` 如已占用，请换用空闲端口，并同步修改后面 API 窗口中的 `PGPORT`。演示库仅监听本机，使用免密测试认证。
+
+```powershell
+$preview = Join-Path $env:TEMP ('mosquito-preview-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $preview | Out-Null
+$cluster = Join-Path $preview 'cluster'
+initdb -D $cluster -U preview -A trust --no-locale -E UTF8
+pg_ctl -D $cluster -l (Join-Path $preview 'postgres.log') -o '-h 127.0.0.1 -p 55432' -w start
+
+$psql = (Get-Command psql.exe).Source
+$env:PGCLIENTENCODING = 'UTF8'
+$files = @('schema.sql', 'migrations/001_ops.sql', 'migrations/002_track_snapshot.sql', 'migrations/003_quality.sql')
+foreach ($file in $files) {
+    & $psql -X -w -h 127.0.0.1 -p 55432 -U preview -d postgres -v ON_ERROR_STOP=1 -f $file
+    if ($LASTEXITCODE -ne 0) { throw "应用失败 $file" }
+}
+```
+
+### 2. 开始生成数据
+
+在同一窗口运行。首批立即生成，此后每个北京时间十分钟刻度为 9 个点位各写入一条观测。CSV 保存在演示目录的 `simulation-csv` 下。网页关闭后，脚本仍会继续运行。按 Ctrl+C 停止，或加 `--once` 只执行一轮。
+
+```powershell
+python -B simulate_points.py --cluster $cluster --psql $psql
+```
+
+### 3. 启动 API 并打开页面
+
+在第二个 PowerShell 窗口进入同一目录，执行以下命令。
+
+```powershell
+python -m pip install -r requirements-ops.txt
+$env:PGHOST = '127.0.0.1'
+$env:PGPORT = '55432'
+$env:PGUSER = 'preview'
+$env:PGDATABASE = 'postgres'
+python -B ops_api.py --port 8767 --psql (Get-Command psql.exe).Source
+```
+
+- 打开 [数据运行监控](http://127.0.0.1:8767/)，在顶部查看点位曲线和原始观测表。观测每 30 秒刷新一次。下方点击「刷新」后可展开最新运行，查看批次、分层任务和质检结果。
+- 双击上一级目录的 [蚊媒监测驾驶舱](../蚊媒监测驾驶舱.html)。本地文件模式默认跟随最新有数据的小时，曲线和地图每 30 秒读取模拟数据库的小时汇总。切换日期或小时可以回看，重新打开页面可恢复跟随最新数据。
+- 使用 `psql` 对同一演示库执行 [simulation_report.sql](simulation_report.sql)，可查看 9 个点位的最新观测、原始行号、小时峰值和日累计。
+
+### 4. 理解运行结果和停止演示
+
+ODS 归档文件和原始行，DWD 写入标准观测，DWS 刷新日、小时汇总，ADS 通过视图提供读数。相同十分钟时段的模拟 CSV 可重复提交，运行有独立记录，已入库的观测按批次和设备时间键去重。
+
+手动导入自己的模拟 CSV 时，在 `scan.py` 原有参数上加 `--track-ops --check-quality`。退出码 `0` 表示通过，`2` 表示已提交但发现需排查的记录或质量异常，`1` 表示处理或检查未能完成。数据结构与已验证场景见[数据库结构图](数据库结构图.md)和[验收报告](数据库运行验收报告.md)。
+
+结束时在两个窗口分别按 Ctrl+C 停止模拟和 API，再在第一个窗口执行 `pg_ctl -D $cluster -m fast -w stop`。模拟 CSV 和数据库会留在临时目录，当前没有自动清理。
+
 仪器按厂商配置向厂商云上报。项目后台定时获取云端提供的 CSV，再完成清洗、写库和日统计。每台设备只需在初次接入时登记机器编号与点位的对应关系。
 
 如果厂商可以推送到项目服务器，可以由推送触发同样的入库流程。当前实现采用 **HTTPS CSV 拉取**。若只有网页登录导出、JSON 分页 API 或对象存储目录，需要根据厂商提供的正式接口调整下载入口。
