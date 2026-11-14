@@ -135,8 +135,8 @@
     #map-replay:hover { background: #dfeada; }
     .plot { position: relative; margin: 0 7px; aspect-ratio: 76 / 70; background: #e9ecdf; border-radius: 7px; overflow: hidden; }
     canvas { display: block; width: 100%; height: 100%; touch-action: pan-y pinch-zoom; }
-    .plot[data-zoomed="true"] canvas { touch-action: none; cursor: grab; }
-    .plot[data-zoomed="true"] canvas.dragging { cursor: grabbing; }
+    .plot canvas { touch-action: none; cursor: grab; }
+    .plot canvas.dragging { cursor: grabbing; }
     canvas:focus-visible { outline-offset: -3px; }
     .marker {
       position: absolute;
@@ -319,12 +319,12 @@
           <div class="heat-ticks" id="heat-ticks"></div>
         </div>
         <div class="map-meta">
-          <div class="legend" aria-label="参考范围"><span><i class="no-data-key"></i>暂无资料</span><span><i class="reference-key"></i>参考圈</span></div>
+          <div class="legend" aria-label="数据状态"><span><i class="no-data-key"></i>暂无资料</span></div>
           <span id="sample-summary"></span>
         </div>
         <p class="map-reading" id="map-reading" role="status">点设备或网格查看数值。</p>
         <p class="caption-note" id="grid-note"></p>
-        <p id="risk-area" class="caption-note risk-area" hidden>东侧绿地 · 独立风险演示</p>
+        <p id="risk-area" class="caption-note risk-area" hidden>独立风险演示</p>
       </figcaption>
     </figure>
 
@@ -372,11 +372,11 @@
         <div class="category-card series-ant"><dt>飞蚁</dt><dd><strong id="ant-count">—</strong><span>只/台</span></dd></div>
       </dl>
       <figure class="trend-panel" aria-labelledby="trend-title">
-        <figcaption class="trend-heading"><h3 id="trend-title">近 7 天趋势</h3><span id="trend-unit">只/台</span></figcaption>
+        <figcaption class="trend-heading"><h3 id="trend-title">两日趋势</h3><span id="trend-unit">只/台</span></figcaption>
         <canvas class="trend-chart" id="trend-chart" role="img" aria-label="雌蚊、雄蚊和飞蚁演示估算趋势"></canvas>
         <div class="trend-legend"><span class="trend-key series-female">雌蚊</span><span class="trend-key series-male">雄蚊</span><span class="trend-key series-ant">飞蚁</span></div>
         <details class="trend-values"><summary>查看每日数值</summary>
-          <table id="trend-table" aria-label="近 7 天演示估算（只/台）"><thead><tr><th scope="col">日期</th><th scope="col">雌蚊</th><th scope="col">雄蚊</th><th scope="col">飞蚁</th></tr></thead><tbody id="trend-values"></tbody></table>
+          <table id="trend-table" aria-label="两日演示估算（只/台）"><thead><tr><th scope="col">日期</th><th scope="col">雌蚊</th><th scope="col">雄蚊</th><th scope="col">飞蚁</th></tr></thead><tbody id="trend-values"></tbody></table>
         </details>
       </figure>
       <a class="overview-link" id="overview-link" href="./蚊媒监测设备总览.html" hidden>返回设备总览</a>
@@ -404,8 +404,9 @@
     </section>
   </main>
 
-  <script src="./住区2米网格数据.js"></script>
-  <script src="./蚊媒数据入库/demo-point-layout.js"></script>
+  <script src="./住区CAD扩区地图数据.js"></script>
+  <script src="./住区驾驶舱模拟分类数据.js"></script>
+  <script src="./住区驾驶舱网格适配.js"></script>
   <script src="./蚊媒数据入库/demo-alerts.js"></script>
   <script src="./蚊媒数据入库/demo-hourly.js"></script>
   <script src="./蚊媒数据入库/demo-trend.js" defer></script>
@@ -441,6 +442,7 @@
     },
   };
   const [west, south, east, north] = data.bounds;
+  plot.style.aspectRatio = `${east - west} / ${north - south}`;
   const cellSize = data.cellSize;
   const radius = data.referenceRadiusM;
   const number = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 1 });
@@ -452,6 +454,15 @@
   const previousHeatLayer = heatLayer.cloneNode();
   const flipLayer = heatLayer.cloneNode();
   const flipContext = flipLayer.getContext('2d');
+  const site = data.site;
+  const cellLookup = new Map(site.cells.map(cell => {
+    const [x, y] = cell.sample;
+    return [Math.floor(y / cellSize) * data.columns + Math.floor(x / cellSize), cell];
+  }));
+  function mapPath(geometry) {
+    return new Path2D(data.geometryPath(geometry, false));
+  }
+  const boundary = mapPath(site.boundary);
   const buildings = new Path2D();
   for (const outline of data.buildingOutlines) {
     buildings.moveTo(...outline[0]);
@@ -576,23 +587,35 @@
   endTime.textContent = data.periodEnd.slice(5, 16).replace('-', '/').replace('T', ' ');
 
   function gridId(index) {
+    if (cellLookup.has(index)) return cellLookup.get(index).grid_id;
     const row = String(Math.floor(index / data.columns) + 1).padStart(3, '0');
     const col = String(index % data.columns + 1).padStart(3, '0');
     return `R${row}-C${col}`;
   }
 
   function gridCenter(index) {
+    if (cellLookup.has(index)) return cellLookup.get(index).sample;
     const x0 = index % data.columns * cellSize;
     return [(x0 + Math.min(x0 + cellSize, data.maxX)) / 2, (Math.floor(index / data.columns) + 0.5) * cellSize];
   }
 
   const gridSources = Array.from({ length: data.columns * data.rows }, (_, index) => {
+    if (!cellLookup.has(index)) return [];
     const [x, y] = gridCenter(index);
-    return data.devices.flatMap((device, i) => {
-      const distance = Math.hypot(x - device.x, y - device.y);
-      return distance < radius ? [{ index: i, distance, weight: 1 - distance / radius }] : [];
-    });
+    return data.devices.map((device, index) => ({
+      index, distance: Math.hypot(x - device.x, y - device.y),
+    })).sort((a, b) => a.distance - b.distance);
   });
+
+  function resolveSources(candidates, available) {
+    const valid = candidates.filter(source => available(source.index));
+    const nearby = valid.filter(source => source.distance < radius);
+    const sources = nearby.length ? nearby : valid.slice(0, 1);
+    return {
+      sources: sources.map(source => ({...source, weight: nearby.length ? 1 - source.distance / radius : 1})),
+      extrapolated: nearby.length === 0 && sources.length > 0,
+    };
+  }
 
   function estimateCount(sources, read) {
     if (sources.length === 0) return null;
@@ -607,8 +630,8 @@
 
   function estimateGrid(readings) {
     return gridSources.map(candidates => {
-      const sources = candidates.filter(source => readings[source.index] !== null);
-      return { sources, estimate: estimateCount(sources, index => readings[index]) };
+      const { sources, extrapolated } = resolveSources(candidates, index => Number.isFinite(readings[index]));
+      return { sources, extrapolated, estimate: estimateCount(sources, index => readings[index]) };
     });
   }
 
@@ -709,7 +732,7 @@
     const isLatest = day === dates.length - 1;
     const samples = data.devices.map((device, index) =>
       isLatest && counts[index] === null ? null : device.sampleCaptures[day]);
-    const sources = gridSources[gridIndex].filter(source => samples[source.index]);
+    const { sources } = resolveSources(gridSources[gridIndex], index => Boolean(samples[index]));
     if (sources.length === 0) return null;
 
     const mosquitoes = index => samples[index][0] + samples[index][1];
@@ -717,7 +740,7 @@
     const rawFemale = sources.reduce((sum, source) => sum + source.weight * samples[source.index][0], 0);
     const rawTotal = sources.reduce((sum, source) => sum + source.weight * mosquitoes(source.index), 0);
     const female = rawTotal ? roundReading(total * rawFemale / rawTotal) : 0;
-    return [female, roundReading(total - female), estimateCount(sources, index => samples[index][2])];
+    return [female, roundReading(total - female), null];
   }
 
   function drawTrend() {
@@ -763,15 +786,15 @@
       ctx.beginPath();
       let previous = false;
       for (const [day, values] of trendSeries.entries()) {
-        if (values) {
+        if (values?.[series] != null) {
           if (previous) ctx.lineTo(px(day), py(values[series]));
           else ctx.moveTo(px(day), py(values[series]));
         }
-        previous = values !== null;
+        previous = values?.[series] != null;
       }
       ctx.stroke();
       for (const [day, values] of trendSeries.entries()) {
-        if (!values) continue;
+        if (values?.[series] == null) continue;
         ctx.beginPath();
         ctx.arc(px(day), py(values[series]), day === dates.length - 1 ? 3 : 2.1, 0, 2 * Math.PI);
         ctx.fill();
@@ -789,13 +812,13 @@
     if (insights.hidden) return;
     const unit = device ? '只' : '只/台';
     const source = device ? '演示读数' : '演示估算';
-    const formatValue = value => value === null ? '—' : value.toFixed(device ? 0 : 1);
+    const formatValue = value => value == null ? '—' : value.toFixed(device ? 0 : 1);
     byId('insight-title').textContent = device ? `${device.id}号设备分类读数` : '格点分类读数';
     byId('insight-window').textContent = `近 24 小时 · ${source}`;
     byId('trend-unit').textContent = unit;
     insights.querySelectorAll('.category-card dd span').forEach(label => { label.textContent = unit; });
     trendCanvas.setAttribute('aria-label', `雌蚊、雄蚊和飞蚁${source}趋势`);
-    byId('trend-table').setAttribute('aria-label', `近 7 天${source}（${unit}）`);
+    byId('trend-table').setAttribute('aria-label', `两日${source}（${unit}）`);
     const latest = trendSeries[trendSeries.length - 1];
     statValues.forEach((element, i) => { element.textContent = formatValue(latest?.[i] ?? null); });
     const rows = dates.map((date, day) => {
@@ -817,8 +840,8 @@
   }
 
   function projection(width, height) {
-    const scaleX = width * zoomLevels[view.level] / (east - west);
-    const scaleY = height * zoomLevels[view.level] / (north - south);
+    const scaleX = Math.min(width / (east - west), height / (north - south)) * zoomLevels[view.level];
+    const scaleY = scaleX;
     return {
       scaleX, scaleY,
       px: x => width / 2 + (x - view.x) * scaleX,
@@ -827,14 +850,19 @@
   }
 
   function constrainView() {
-    const halfWidth = (east - west) / (2 * zoomLevels[view.level]);
-    const halfHeight = (north - south) / (2 * zoomLevels[view.level]);
-    view.x = Math.max(west + halfWidth, Math.min(east - halfWidth, view.x));
-    view.y = Math.max(south + halfHeight, Math.min(north - halfHeight, view.y));
+    const { width, height } = plot.getBoundingClientRect();
+    if (!width || !height) return;
+    const { scaleX } = projection(width, height);
+    const limitX = Math.max((east - west) * 0.18, (east - west - width / scaleX) / 2);
+    const limitY = Math.max((north - south) * 0.18, (north - south - height / scaleX) / 2);
+    const centerX = (west + east) / 2;
+    const centerY = (south + north) / 2;
+    view.x = Math.max(centerX - limitX, Math.min(centerX + limitX, view.x));
+    view.y = Math.max(centerY - limitY, Math.min(centerY + limitY, view.y));
   }
 
   function setZoom(level) {
-    if (level < 0 || level >= zoomLevels.length || level === view.level) return;
+    if (level < 0 || level >= zoomLevels.length || (level === view.level && level !== 0)) return;
     if (level > view.level && selection) {
       const [x, y] = selection.kind === 'device'
         ? [data.devices[selection.index].x, data.devices[selection.index].y]
@@ -847,6 +875,10 @@
       }
     }
     view.level = level;
+    if (level === 0) {
+      view.x = (west + east) / 2;
+      view.y = (south + north) / 2;
+    }
     constrainView();
     zoomOut.disabled = level === 0;
     zoomReset.disabled = level === 0;
@@ -857,6 +889,7 @@
   }
 
   function cellKind(x, y) {
+    if (!heatContext.isPointInPath(boundary, x, y, 'evenodd')) return 'unmonitored';
     return heatContext.isPointInPath(buildings, x, y) ? 'building' : 'cell';
   }
 
@@ -902,8 +935,12 @@
       const value = counts[index];
       const area = device.area ? ` · ${device.area}` : '';
       const source = hourly ? '小时最大值' : '演示读数';
-      detail.textContent = `${device.id}号设备${area} · ${value === null ? '缺测' : `${source} ${value} ${hourly ? unit : '只'}`}`;
+      detail.textContent = `${device.id}号设备${area} · ${device.gridId} · ${value === null ? '缺测' : `${source} ${value} ${hourly ? unit : '只'}`}`;
       if (!hourly) showInsights(index, kind);
+      return;
+    }
+    if (kind === 'unmonitored') {
+      detail.textContent = '未监测区';
       return;
     }
     if (kind === 'building') {
@@ -911,11 +948,11 @@
       return;
     }
     if (!hourly) showInsights(index);
-    const { sources, estimate } = gridReadings[index];
+    const { sources, estimate, extrapolated } = gridReadings[index];
     if (sources.length === 0) {
       detail.textContent = `${gridId(index)} · 暂无监测资料`;
     } else if (sources.length === 1) {
-      detail.textContent = `${gridId(index)} · 单点衰减 ${estimate.toFixed(1)} ${unit} · 参考 ${data.devices[sources[0].index].id}号设备`;
+      detail.textContent = `${gridId(index)} · ${extrapolated ? "最近点外推" : "单点衰减"} ${estimate.toFixed(1)} ${unit} · 参考 ${data.devices[sources[0].index].id}号设备`;
     } else {
       detail.textContent = `${gridId(index)} · ${sources.length} 台支持 · 演示估算 ${estimate.toFixed(1)} ${unit}`;
     }
@@ -935,7 +972,18 @@
 
     const { px, py, scaleX, scaleY } = projection(width, height);
     if (baseMap.complete && baseMap.naturalWidth) {
-      context.drawImage(baseMap, px(west), py(north), scaleX * (east - west), scaleY * (north - south));
+      // Register the inner frame of the illustration to the CAD frame.
+      const imageFrame = { x: 65, y: 83, width: 1473, height: 815 };
+      const cadFrame = data.cadFrame;
+      const [left, bottom, right, top] = cadFrame;
+      const frameWidth = px(right) - px(left);
+      const frameHeight = py(bottom) - py(top);
+      const fit = Math.min(frameWidth / imageFrame.width, frameHeight / imageFrame.height);
+      const imageWidth = imageFrame.width * fit;
+      const imageHeight = imageFrame.height * fit;
+      context.drawImage(baseMap, imageFrame.x, imageFrame.y, imageFrame.width, imageFrame.height,
+        px(left) + (frameWidth - imageWidth) / 2, py(top) + (frameHeight - imageHeight) / 2,
+        imageWidth, imageHeight);
     }
     markers.forEach((marker, index) => {
       const x = px(data.devices[index].x);
@@ -944,16 +992,15 @@
       marker.style.setProperty('--y', `${y}px`);
       marker.hidden = x < 0 || y < 0 || x > width || y > height;
     });
-    function cellRectangle(index) {
-      const x = (index % data.columns) * cellSize;
-      const y = Math.floor(index / data.columns) * cellSize;
-      return [px(x), py(y + cellSize), px(Math.min(x + cellSize, data.maxX)) - px(x), py(y) - py(y + cellSize)];
+    const mapTransform = new DOMMatrix([scaleX, 0, 0, -scaleY, px(0), py(0)]);
+    function projectPath(path) {
+      const projected = new Path2D();
+      projected.addPath(path, mapTransform);
+      return projected;
     }
 
     context.save();
-    context.beginPath();
-    context.rect(px(0), py(data.maxY), px(data.maxX) - px(0), py(0) - py(data.maxY));
-    context.clip();
+    context.clip(projectPath(boundary), 'evenodd');
     const outdoors = new Path2D();
     outdoors.rect(px(0), py(data.maxY), px(data.maxX) - px(0), py(0) - py(data.maxY));
     outdoors.addPath(buildings, new DOMMatrix([scaleX, 0, 0, -scaleY, px(0), py(0)]));
@@ -962,49 +1009,28 @@
     context.drawImage(heatTransition ? flipLayer : heatLayer, px(0), py(data.maxY),
       px(data.maxX) - px(0), py(0) - py(data.maxY));
 
-    const circleRadius = px(radius) - px(0);
-    context.strokeStyle = 'rgba(130, 105, 64, .52)';
-    context.lineWidth = 1;
-    context.setLineDash([3, 4]);
-    data.devices.forEach((device, index) => {
-      if (counts[index] === null) return;
-      const x = px(device.x);
-      const y = py(device.y);
-      const shade = context.createRadialGradient(x, y, 0, x, y, circleRadius);
-      shade.addColorStop(0, 'rgba(255, 242, 204, .04)');
-      shade.addColorStop(1, 'rgba(255, 242, 204, 0)');
-      context.beginPath();
-      context.arc(x, y, circleRadius, 0, Math.PI * 2);
-      context.fillStyle = shade;
-      context.fill();
-      context.stroke();
-    });
     context.restore();
 
     if (showGrid) {
+      context.save();
+      context.clip(outdoors, 'evenodd');
       context.strokeStyle = '#496e6270';
       context.lineWidth = 0.65;
-      context.beginPath();
-      for (let col = 0; col < data.columns; col++) {
-        context.moveTo(px(col * cellSize), py(0));
-        context.lineTo(px(col * cellSize), py(data.maxY));
-      }
-      context.moveTo(px(data.maxX), py(0));
-      context.lineTo(px(data.maxX), py(data.maxY));
-      for (let row = 0; row <= data.rows; row++) {
-        context.moveTo(px(0), py(row * cellSize));
-        context.lineTo(px(data.maxX), py(row * cellSize));
-      }
-      context.stroke();
+      context.stroke(projectPath(data.gridPath));
+      context.restore();
     }
-    if (selection && selection.kind !== 'device') {
-      const rect = cellRectangle(selection.index);
+    const cell = selection?.kind !== 'device' && cellLookup.get(selection?.index);
+    if (cell && selection.kind === 'cell') {
+      context.save();
+      context.clip(outdoors, 'evenodd');
+      const path = projectPath(mapPath(cell.geometry));
       context.strokeStyle = '#fffdf6';
       context.lineWidth = 3.5;
-      context.strokeRect(...rect);
+      context.stroke(path);
       context.strokeStyle = '#174e4c';
       context.lineWidth = 1.5;
-      context.strokeRect(...rect);
+      context.stroke(path);
+      context.restore();
     }
   }
 
@@ -1024,7 +1050,6 @@
   canvas.addEventListener('pointerdown', event => {
     if (!event.isPrimary || event.button !== 0) return;
     ignoreMapClick = false;
-    if (view.level === 0) return;
     const { width, height } = canvas.getBoundingClientRect();
     const { scaleX, scaleY } = projection(width, height);
     drag = { id: event.pointerId, startX: event.clientX, startY: event.clientY, x: view.x, y: view.y, scaleX, scaleY, moved: false };
@@ -1040,6 +1065,7 @@
     view.x = drag.x - dx / drag.scaleX;
     view.y = drag.y + dy / drag.scaleY;
     constrainView();
+    zoomReset.disabled = false;
     drawMap();
   });
   function finishDrag(event) {
@@ -1094,7 +1120,7 @@
     byId('average').closest('.metric').querySelector('dt').textContent = hourly ? '各点小时最大值的均值' : '每设备平均捕获';
     byId('map-title').textContent = hourly ? '2 米网格 · 模拟空间估算' : '2 米网格估算';
     byId('heat-scale').setAttribute('aria-label', `连续估算色带，单位为${unit}`);
-    note.textContent = `色带单位为${unit}。淡圈为 ${radius} 米参考范围，单点估算每远 ${data.singleDecayDistanceM} 米减 1 只。`;
+    note.textContent = `色带单位为${unit}。场地网格按邻近点插值，超出 ${radius} 米参考范围时按最近有效点每 ${data.singleDecayDistanceM} 米减 1 只，最低为 0。`;
     byId('period-summary').hidden = hourly;
     replay.hidden = hourly || reducedMotion.matches;
     byId('risk-count').textContent = scenario.riskCount ?? '—';
@@ -1106,7 +1132,7 @@
       const missing = counts[index] === null;
       marker.dataset.missing = String(missing);
       const device = data.devices[index];
-      const pointLabel = device.id === 3 ? '，模拟坐标' : '';
+      const pointLabel = '';
       marker.setAttribute('aria-label', `${device.id}号设备${pointLabel}，${missing ? '缺测' : `${hourly ? '小时最大值' : '演示读数'} ${counts[index]} 只`}`);
     });
     if (hourly) {
@@ -1150,6 +1176,8 @@
   });
   const hourlyPanel = globalThis.initDemoHourly({
     points: data.devices,
+    localRows: data.hourlyRows,
+    simulationUrl: location.protocol === 'file:' ? 'http://127.0.0.1:8767/api/ops/simulation/hourly' : null,
     applyReadings(readings) {
       hourlyReadings = readings;
       if (selector.value === 'hourly') renderScenario();
@@ -1178,8 +1206,8 @@
   new ResizeObserver(drawMap).observe(plot);
   new ResizeObserver(drawTrend).observe(trendCanvas);
   baseMap.onload = drawMap;
-  baseMap.onerror = () => { note.textContent = 'CAD 底图未加载。请确认图片与网页位于同一目录。'; };
-  baseMap.src = './住区CAD底图.png';
+  baseMap.onerror = () => { note.textContent = '手绘底图未加载。请确认图片与网页位于同一目录。'; };
+  baseMap.src = './珠江未来小屋-手绘底图.png';
   const params = new URLSearchParams(location.search);
   const requestedDevice = params.get('device');
   const deviceIndex = data.devices.findIndex(device => String(device.id) === requestedDevice);
@@ -1187,7 +1215,8 @@
     selection = { kind: 'device', index: deviceIndex };
     byId('overview-link').hidden = false;
   }
-  if (params.get('hourly') === '1' || location.hash === '#hourly-panel') selector.value = 'hourly';
+  if (params.get('hourly') === '1' || location.hash === '#hourly-panel' ||
+      (location.protocol === 'file:' && !location.hash)) selector.value = 'hourly';
   switchScenario();
   if (deviceIndex >= 0 && location.hash === '#grid-insights' && !insights.hidden) {
     requestAnimationFrame(() => insights.scrollIntoView({ block: 'start' }));

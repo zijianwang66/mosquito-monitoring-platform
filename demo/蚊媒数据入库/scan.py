@@ -176,7 +176,7 @@ def parse_snapshot(content):
     return records
 
 
-def make_sql(source_id, content, records):
+def make_sql(source_id, content, records, run_id=None):
     payload = {
         "source_id": source_id,
         "sha256": sha256(content).hexdigest(),
@@ -186,10 +186,13 @@ def make_sql(source_id, content, records):
     # Base64 emits only ASCII letters, digits, +, / and =. CSV cells never
     # enter the SQL as executable text.
     encoded = base64.b64encode(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+    function = b"raw.ingest_snapshot(" if run_id is None else (
+        b"ops.process_snapshot(" + str(int(run_id)).encode("ascii") + b", "
+    )
     return (
         b"BEGIN;\nSET LOCAL lock_timeout = '30s';\n"
         b"SET LOCAL statement_timeout = '180s';\n"
-        b"SELECT raw.ingest_snapshot(convert_from(decode('"
+        b"SELECT " + function + b"convert_from(decode('"
         + encoded + b"', 'base64'), 'UTF8')::jsonb);\nCOMMIT;\n"
     )
 
@@ -214,6 +217,42 @@ def write_snapshot(psql, service, sql):
     return json.loads(result.stdout)
 
 
+def load_records(args, config):
+    if args.file:
+        with args.file.open("rb") as stream:
+            content = read_csv_bytes(stream)
+    else:
+        url = config.get("csv_url")
+        if not url:
+            raise ScanError("云端配置缺少 csv_url")
+        token = os.environ.get("MOSQUITO_CSV_TOKEN") or config.get("bearer_token")
+        content = download_csv(url, token)
+    return content, parse_snapshot(content)
+
+
+def tracked_snapshot(args, config, source_id, write):
+    run_id = int(write(b"INSERT INTO ops.batch_run DEFAULT VALUES RETURNING run_id;"))
+    stage = "source"
+    try:
+        content, records = load_records(args, config)
+        stage = "database"
+        return write(make_sql(source_id, content, records, run_id))
+    except (ScanError, OSError, ValueError):
+        reason = {
+            "source": b"CSV acquisition or parsing failed",
+            "database": b"Database processing failed or completion could not be confirmed",
+        }[stage]
+        try:
+            write(
+                b"WITH closed AS (UPDATE ops.batch_run SET status = 'failed', finished_at = clock_timestamp(), "
+                b"failure_reason = '" + reason + b"' WHERE status = 'running' AND run_id = "
+                + str(run_id).encode("ascii") + b" RETURNING run_id) SELECT count(*) FROM closed;"
+            )
+        except (ScanError, OSError, ValueError):
+            logging.warning("运行 %d 未能确认失败状态，请查询 ops.batch_run", run_id)
+        raise
+
+
 def run(args):
     config = {}
     if args.config:
@@ -225,33 +264,48 @@ def run(args):
     source_id = args.source_id or config.get("source_id", "")
     if not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", source_id):
         raise ScanError("source_id 须为 1–64 位字母、数字、下划线或连字符")
-    if args.file:
-        with args.file.open("rb") as stream:
-            content = read_csv_bytes(stream)
-    else:
-        url = config.get("csv_url")
-        if not url:
-            raise ScanError("云端配置缺少 csv_url")
-        token = os.environ.get("MOSQUITO_CSV_TOKEN") or config.get("bearer_token")
-        content = download_csv(url, token)
-
-    records = parse_snapshot(content)
-    valid = [row["normalized"] for row in records if "normalized" in row]
-    logging.info("来源=%s 解析=%d 有效=%d 格式错误=%d",
-                 source_id, len(records), len(valid), len(records) - len(valid))
     if args.check:
+        _, records = load_records(args, config)
+        valid = [row["normalized"] for row in records if "normalized" in row]
+        logging.info("来源=%s 解析=%d 有效=%d 格式错误=%d",
+                     source_id, len(records), len(valid), len(records) - len(valid))
         logging.info("机器编号=%s", ", ".join(sorted({row["machine_no"] for row in valid})))
         for row in records:
             if "error" in row:
                 logging.warning("CSV 第 %d 行：%s", row["line_no"], row["error"])
         return 1 if len(valid) != len(records) else 0
 
-    report = write_snapshot(
-        args.psql or config.get("psql", "psql"),
-        config.get("pg_service"),
-        make_sql(source_id, content, records),
-    )
+    def write(sql):
+        return write_snapshot(
+            args.psql or config.get("psql", "psql"), config.get("pg_service"), sql,
+        )
+
+    if args.track_ops:
+        report = tracked_snapshot(args, config, source_id, write)
+    else:
+        content, records = load_records(args, config)
+        report = write(make_sql(source_id, content, records))
     logging.info("入库结果 %s", json.dumps(report, ensure_ascii=False))
+    if args.check_quality:
+        run_id = str(int(report["run_id"])).encode("ascii")
+        try:
+            quality = write(b"SELECT ops.check_run(" + run_id + b");")
+        except (ScanError, OSError, ValueError):
+            try:
+                write(
+                    b"WITH saved AS (INSERT INTO ops.quality_check "
+                    b"(run_id, rule_code, result, detail) SELECT "
+                    + run_id
+                    + b", 'QUALITY_EXECUTION', 'error', 'Quality check failed to complete' "
+                    b"WHERE NOT EXISTS (SELECT 1 FROM ops.quality_check WHERE run_id = "
+                    + run_id + b") RETURNING check_id) SELECT count(*) FROM saved;"
+                )
+            except (ScanError, OSError, ValueError):
+                logging.warning("运行 %s 未能写入质量检查执行错误", report["run_id"])
+            raise ScanError(f"入库已提交，运行 {report['run_id']} 的质量检查未能确认完成") from None
+        logging.info("质量检查 %s", json.dumps(quality, ensure_ascii=False))
+        if any(quality.values()):
+            return 2
     if any(report[key] for key in ("invalid", "unmapped", "conflict")):
         logging.warning("此批有待处理记录，按批次号查询 raw.observation_import")
         return 2
@@ -266,8 +320,12 @@ def main():
     parser.add_argument("--source-id", help="来源标识，对应数据库里的设备映射")
     parser.add_argument("--psql", help="psql 可执行文件路径")
     parser.add_argument("--check", action="store_true", help="只解析 CSV")
+    parser.add_argument("--track-ops", action="store_true", help="记录 OPS 运行与分层任务")
+    parser.add_argument("--check-quality", action="store_true", help="入库后执行质量检查与对账")
     parser.add_argument("--log-file", type=Path, help="定时运行日志，自动轮换")
     args = parser.parse_args()
+    if args.check_quality and (not args.track_ops or args.check):
+        parser.error("--check-quality 须与 --track-ops 一起用于实际入库")
     handlers = [logging.StreamHandler()]
     if args.log_file:
         args.log_file.parent.mkdir(parents=True, exist_ok=True)

@@ -1,4 +1,4 @@
-globalThis.initDemoHourly = ({ points, applyReadings, locatePoint }) => {
+globalThis.initDemoHourly = ({ points, applyReadings, locatePoint, localRows, simulationUrl }) => {
   const panel = document.getElementById('hourly-panel');
   const date = document.getElementById('hourly-date');
   const hour = document.getElementById('hourly-hour');
@@ -11,6 +11,8 @@ globalThis.initDemoHourly = ({ points, applyReadings, locatePoint }) => {
   const parameters = new URLSearchParams(location.search);
   let results = null;
   let request;
+  let timer;
+  let followLatest = !parameters.has('date') && !parameters.has('hour');
   let selectedPoint = points.find(point => String(point.id) === parameters.get('device'))?.id ?? 7;
 
   for (const index of hours) {
@@ -102,7 +104,7 @@ globalThis.initDemoHourly = ({ points, applyReadings, locatePoint }) => {
     }
     chart.setAttribute('aria-label', `${selectedPoint} 号点位逐小时最大单条蚊数`);
     if (results) {
-      const source = results.mode === 'snapshot' ? '数据库快照' : '联调数据库';
+      const source = results.mode === 'simulation' ? '模拟数据库 · 每 30 秒刷新' : results.mode === 'local' ? '本地演示数据' : results.mode === 'snapshot' ? '数据库快照' : '联调数据库';
       const reading = results.byHour.get(Number(hour.value))?.get(selectedPoint)?.value;
       const summary = reading == null ? '缺测' : `${reading} 只/条`;
       status.textContent = `${date.value} ${formatHour(hour.value)}:00 · ${selectedPoint} 号 ${summary} · ${source}`;
@@ -121,8 +123,49 @@ globalThis.initDemoHourly = ({ points, applyReadings, locatePoint }) => {
     request?.abort();
     const current = new AbortController();
     request = current;
+    if (simulationUrl) {
+      try {
+        const url = new URL(simulationUrl);
+        if (!followLatest) url.searchParams.set('date', date.value);
+        const response = await fetch(url, { signal: AbortSignal.any([current.signal, AbortSignal.timeout(12000)]) });
+        if (!response.ok) throw new Error();
+        const payload = await response.json();
+        if (current.signal.aborted) return;
+        if (payload.latest) {
+          const [latestDay, latestTime] = payload.latest.split('T');
+          if (![...date.options].some(option => option.value === latestDay)) {
+            date.add(new Option(latestDay, latestDay));
+          }
+          if (followLatest) {
+            date.value = latestDay;
+            hour.value = String(Number(latestTime.slice(0, 2)));
+          }
+          const byHour = new Map();
+          for (const row of payload.rows) {
+            if (!byHour.has(row.hour)) byHour.set(row.hour, new Map());
+            byHour.get(row.hour).set(row.point, row);
+          }
+          results = { mode: 'simulation', rows: payload.rows, byHour };
+          render();
+          return;
+        }
+      } catch {
+        if (current.signal.aborted) return;
+      }
+    }
     results = null;
     render();
+    if (localRows) {
+      const rows = localRows[date.value] || [];
+      const byHour = new Map();
+      for (const row of rows) {
+        if (!byHour.has(row.hour)) byHour.set(row.hour, new Map());
+        byHour.get(row.hour).set(row.point, row);
+      }
+      results = { mode: 'local', rows, byHour };
+      render();
+      return;
+    }
     alerts.load(date.value, Number(hour.value));
     if (location.protocol === 'file:') {
       status.textContent = '请通过本地 Demo 服务打开页面，读取小时统计。';
@@ -149,8 +192,8 @@ globalThis.initDemoHourly = ({ points, applyReadings, locatePoint }) => {
     }
   }
 
-  date.addEventListener('change', load);
-  hour.addEventListener('change', render);
+  date.addEventListener('change', () => { followLatest = false; load(); });
+  hour.addEventListener('change', () => { followLatest = false; render(); });
   refresh.addEventListener('click', load);
   new ResizeObserver(draw).observe(chart);
   return {
@@ -161,7 +204,11 @@ globalThis.initDemoHourly = ({ points, applyReadings, locatePoint }) => {
     },
     setActive(active) {
       panel.hidden = !active;
-      if (active) load();
+      clearInterval(timer);
+      if (active) {
+        load();
+        if (simulationUrl) timer = setInterval(load, 30000);
+      }
       else {
         request?.abort();
         alerts.stop();

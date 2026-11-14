@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>数据运行监控 · 蚊媒监测平台</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: "Inter", "Microsoft YaHei UI", system-ui, sans-serif; line-height: 1.5; background: #f5f8f7; color: #192e29; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3 { margin-top: 0; font-weight: 600; line-height: 1.2; }
+    img { max-width: 100%; height: auto; display: block; }
+    button, input, select { font: inherit; }
+    :root { --line: #cbdad4; --muted: #4b645c; --accent: #145b49; }
+    ::selection { background: #d4eee4; color: #15392d; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    header { background: #12352d; color: #e7f7f0; }
+    header div, main { max-width: 1280px; margin: auto; padding-inline: clamp(16px, 4vw, 52px); }
+    header div { padding-block: 14px; font-size: .9rem; }
+    main { padding-block: clamp(24px, 5vw, 56px); }
+    h1 { font-size: clamp(1.85rem, 4vw, 2.8rem); margin-bottom: 26px; }
+    h2 { font-size: 1.25rem; margin-bottom: 14px; }
+    h3 { font-size: 1rem; margin-block: 26px 10px; }
+    .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 10px; }
+    button, select { min-height: 42px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; color: inherit; background: white; }
+    button:not(:disabled), select { cursor: pointer; }
+    button:hover:not(:disabled), select:hover { border-color: var(--accent); }
+    button:disabled { opacity: .55; }
+    #refresh { background: var(--accent); color: white; border-color: var(--accent); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 26px; align-items: start; }
+    section { min-width: 0; border-top: 2px solid #82a79a; padding-top: 18px; }
+    .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: .875rem; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; vertical-align: top; padding: 10px 8px; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+    th { background: #e9f1ed; font-weight: 600; }
+    td button { min-height: 34px; padding: 3px 8px; }
+    tr.selected td { background: #e4f2eb; }
+    .muted { color: var(--muted); }
+    .failed, .error { color: #9a352c; }
+    .succeeded, .passed { color: var(--accent); }
+    .running { color: #755100; }
+    .status { font-weight: 600; white-space: nowrap; }
+    #more { margin-top: 14px; }
+    #detail p { margin: 8px 0; overflow-wrap: anywhere; }
+    .simulation { margin-bottom: 32px; }
+    #point-chart { width: 100%; height: 260px; display: block; }
+    #point-chart text { fill: var(--muted); font-size: 12px; }
+    #point-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .82rem; }
+    #point-legend span::before { content: ""; display: inline-block; width: 12px; height: 3px; margin-right: 5px; vertical-align: middle; background: var(--series); }
+    .observations { max-height: 360px; }
+    .observations th { position: sticky; top: 0; }
+    .observations td, .observations th { white-space: nowrap; }
+    @media (max-width: 860px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+  </style>
+  <script src="{{ url_for('static', filename='ops.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='simulation.js') }}" defer></script>
+</head>
+<body>
+  <header><div>蚊媒监测平台</div></header>
+  <main>
+    <h1>数据运行监控</h1>
+    <section class="simulation" aria-labelledby="simulation-title">
+      <h2 id="simulation-title">九点位模拟观测</h2>
+      <div class="toolbar">
+        <label for="simulation-point">点位</label>
+        <select id="simulation-point"></select>
+        <button id="simulation-refresh" type="button">刷新观测</button>
+      </div>
+      <p id="simulation-message" class="muted" role="status">正在读取模拟观测…</p>
+      <h3>蚊媒总数（只）</h3>
+      <svg id="point-chart" role="img" aria-label="蚊媒总数随北京时间变化"></svg>
+      <div id="point-legend" aria-label="曲线图例"></div>
+      <h3>原始观测</h3>
+      <div class="scroll observations" tabindex="0" aria-label="模拟原始观测表，可横向滚动">
+        <table aria-label="模拟原始观测">
+          <thead><tr id="simulation-head"></tr></thead>
+          <tbody id="simulation-rows"></tbody>
+        </table>
+      </div>
+    </section>
+    <div class="layout">
+      <section aria-labelledby="runs-title">
+        <h2 id="runs-title">最近运行</h2>
+        <div class="toolbar">
+          <label for="status">运行状态</label>
+          <select id="status">
+            <option value="">全部</option><option value="running">运行中</option>
+            <option value="succeeded">成功</option><option value="failed">失败</option>
+          </select>
+          <button id="refresh" type="button">刷新</button>
+        </div>
+        <p id="list-message" class="muted" role="status">正在加载运行记录…</p>
+        <div class="scroll" id="runs-table" hidden>
+          <table aria-label="运行记录">
+            <thead><tr><th scope="col">运行</th><th scope="col">批次</th><th scope="col">状态</th><th scope="col">开始时间</th></tr></thead>
+            <tbody id="runs"></tbody>
+          </table>
+        </div>
+        <button id="more" type="button" hidden>加载更早记录</button>
+      </section>
+      <section aria-labelledby="detail-title">
+        <h2 id="detail-title">运行详情</h2>
+        <p id="detail-message" class="muted" role="status">选择一条运行记录查看详情。</p>
+        <div id="detail" hidden></div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
